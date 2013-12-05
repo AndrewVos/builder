@@ -10,9 +10,35 @@ import (
 	"strings"
 )
 
+type Configuration struct {
+	Host         string
+	Port         string
+	Repositories []Repository
+}
+
+func NewConfigurationFromFile(path string) *Configuration {
+	c := &Configuration{}
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Println("Error reading config file")
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	json.Unmarshal(b, c)
+	return c
+}
+
+type Repository struct {
+	Owner      string
+	Repository string
+}
+
+var configuration *Configuration
+
 func main() {
+	configuration = NewConfigurationFromFile("builder.json")
 	token := retrieveAuthToken()
-	createHook(token, "http://134.34.34.34", "AndrewVos", "builder")
+	createHooks(token)
 	serve()
 }
 
@@ -62,9 +88,10 @@ func retrieveAuthToken() string {
 	return string(token)
 }
 
-func createHook(token string, host string, owner string, repo string) {
-	url := "https://api.github.com/repos/" + owner + "/" + repo + "/hooks?access_token=" + token
-	body := `
+func createHooks(token string) {
+	for _, repo := range configuration.Repositories {
+		url := "https://api.github.com/repos/" + repo.Owner + "/" + repo.Repository + "/hooks?access_token=" + token
+		body := `
     {
       "name": "web",
       "active": true,
@@ -73,21 +100,22 @@ func createHook(token string, host string, owner string, repo string) {
         "pull_request"
       ],
       "config": {
-        "url": "` + host + `/hook",
+        "url": "` + configuration.Host + ":" + configuration.Port + `/hook",
         "content_type": "json"
       }
     }`
 
-	client := &http.Client{}
-	request, _ := http.NewRequest("POST", url, strings.NewReader(body))
-	response, err := client.Do(request)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		client := &http.Client{}
+		request, _ := http.NewRequest("POST", url, strings.NewReader(body))
+		response, err := client.Do(request)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		responseBody, _ := ioutil.ReadAll(response.Body)
+		response.Body.Close()
+		fmt.Println(string(responseBody))
 	}
-	responseBody, _ := ioutil.ReadAll(response.Body)
-	response.Body.Close()
-	fmt.Println(string(responseBody))
 }
 
 func serve() {
