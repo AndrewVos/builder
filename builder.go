@@ -12,7 +12,7 @@ import (
 
 func main() {
 	token := retrieveAuthToken()
-	createHook(token)
+	createHook(token, "http://134.34.34.34", "AndrewVos", "builder")
 	serve()
 }
 
@@ -62,9 +62,32 @@ func retrieveAuthToken() string {
 	return string(token)
 }
 
-func createHook(token string) {
-	// ["push", "pull_request"]
-	// http://developer.github.com/v3/repos/hooks/
+func createHook(token string, host string, owner string, repo string) {
+	url := "https://api.github.com/repos/" + owner + "/" + repo + "/hooks?access_token=" + token
+	body := `
+    {
+      "name": "web",
+      "active": true,
+      "events": [
+        "push",
+        "pull_request"
+      ],
+      "config": {
+        "url": "` + host + `/hook",
+        "content_type": "json"
+      }
+    }`
+
+	client := &http.Client{}
+	request, _ := http.NewRequest("POST", url, strings.NewReader(body))
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	responseBody, _ := ioutil.ReadAll(response.Body)
+	response.Body.Close()
+	fmt.Println(string(responseBody))
 }
 
 func serve() {
