@@ -1,14 +1,37 @@
 package main
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"github.com/howeyc/gopass"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 )
+
+type GithubPushEvent struct {
+	Ref        string
+	HeadCommit GithubCommit `json:"head_commit"`
+	Repository GithubRepository
+}
+
+type GithubRepository struct {
+	Name  string
+	URL   string
+	Owner GithubOwner
+}
+
+type GithubOwner struct {
+	Name string
+}
+
+type GithubCommit struct {
+	ID string
+}
 
 type Configuration struct {
 	Host         string
@@ -119,41 +142,81 @@ func createHooks(token string) {
 }
 
 func serve() {
+	http.HandleFunc("/hook", hookHandler)
+	http.ListenAndServe(":"+configuration.Port, nil)
 }
 
-// func hookHandler() {
-//   * https://help.github.com/articles/post-receive-hooks
-// if ensureHookComesFromGithub(request) == false {
-// 	return
-// }
-// buildPath = generateBuildPath()
-// push = json.Unmarshal(request.body)
-// checkout(buildPath, push)
-// build(buildPath)
-// }
+func hookHandler(w http.ResponseWriter, r *http.Request) {
+	body, _ := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	fmt.Println(string(body))
+	var push GithubPushEvent
+	json.Unmarshal(body, &push)
+	build(push)
+}
 
-// func buildHandler() {
-// }
+func build(push GithubPushEvent) {
+	os.MkdirAll(buildPath(push), 0600)
+	output, _ := os.Create(logPath(push))
+	defer output.Close()
+	checkout(push, output)
+	execute(push, output)
+}
+
+func sourcePath(push GithubPushEvent) string {
+	return buildPath(push) + "/source"
+}
+
+func logPath(push GithubPushEvent) string {
+	return buildPath(push) + "/output.log"
+}
+
+func buildPath(push GithubPushEvent) string {
+	hash := md5.New()
+	io.WriteString(hash, push.Ref)
+	io.WriteString(hash, push.HeadCommit.ID)
+	return "builds/" + fmt.Sprintf("%x", hash.Sum(nil))
+}
 
 // func ensureHookComesFromGithub(request) {
 //   ips = get("https://api.github.com/meta")
 //   return request.ip in ips
 // }
 
-// func checkout(path string, push) {
-//   branch = strings.Split(push.ref, "/"))[-1]
-//   run("mkdir " + path)
-//   run("git clone --depth=50 --quiet --branch "+push.branch+ "https://github.com/"+push.owner + "/" + push.repo + ".git")
-//   run("git checkout -fq " + push.headCommit.id)
-// }
+func checkout(push GithubPushEvent, output *os.File) {
+	branch := strings.Split(push.Ref, "/")[2]
 
-// func build(path string) {
-//   run("cd path")
-//   run("bash Builderfile")
-// }
+	url := strings.Replace(push.Repository.URL, "https://", "https://"+retrieveAuthToken()+"@", -1)
 
-// func run(directory string, command string) {
-//   "cd directory"
-//   i = exec(command)
-//   i.output = directory + "/output.log"
-// }
+	cmd := exec.Command("git", "clone", "--depth=50", "--branch", branch, url, sourcePath(push))
+	cmd.Stdout = output
+	cmd.Stderr = output
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	cmd = exec.Command("git", "checkout", push.HeadCommit.ID)
+	cmd.Dir = sourcePath(push)
+	cmd.Stdout = output
+	cmd.Stderr = output
+
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func execute(push GithubPushEvent, output *os.File) {
+	output.Close()
+	cmd := exec.Command("script", "-f", "-c", "./Builderfile", "../output.log")
+	cmd.Dir = sourcePath(push)
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
