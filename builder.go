@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/howeyc/gopass"
+	"github.com/kr/pty"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -215,22 +216,26 @@ func checkout(push GithubPushEvent, output *os.File) {
 }
 
 func execute(push GithubPushEvent, output *os.File) {
-	cmd := exec.Command("ssh", "-t", "-t", "localhost", "cd "+sourcePath(push)+";./Builderfile")
+	cmd := exec.Command("bash", "./Builderfile")
 	cmd.Dir = sourcePath(push)
 	cmd.Stdout = output
 	cmd.Stderr = output
-	err := cmd.Run()
+	f, err := pty.Start(cmd)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	cmd.Wait()
+	io.Copy(output, f)
 
 	fmt.Println("build complete")
-	result := &BuildResult{
-		Success: cmd.ProcessState.Success(),
+	success := true
+	if err := cmd.Wait(); err != nil {
+		fmt.Println(err)
+		success = false
 	}
+
+	result := &BuildResult{success}
 	b, _ := json.Marshal(result)
 	ioutil.WriteFile(resultPath(push), b, 0600)
 }
