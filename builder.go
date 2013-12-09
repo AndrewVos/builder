@@ -14,6 +14,13 @@ import (
 	"strings"
 )
 
+type Buildable struct {
+	Owner string
+	Repo  string
+	Ref   string
+	SHA   string
+}
+
 type GithubPushEvent struct {
 	Ref        string
 	HeadCommit GithubCommit `json:"head_commit"`
@@ -153,33 +160,40 @@ func hookHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(string(body))
 	var push GithubPushEvent
 	json.Unmarshal(body, &push)
-	build(push)
+
+	buildable := Buildable{
+		Owner: push.Repository.Owner.Name,
+		Repo:  push.Repository.Name,
+		Ref:   push.Ref,
+		SHA:   push.HeadCommit.ID,
+	}
+	build(buildable)
 }
 
-func build(push GithubPushEvent) {
-	os.MkdirAll(buildPath(push), 0600)
-	output, _ := os.Create(logPath(push))
+func build(buildable Buildable) {
+	os.MkdirAll(buildPath(buildable), 0600)
+	output, _ := os.Create(logPath(buildable))
 	defer output.Close()
-	checkout(push, output)
-	execute(push, output)
+	checkout(buildable, output)
+	execute(buildable, output)
 }
 
-func sourcePath(push GithubPushEvent) string {
-	return buildPath(push) + "/source"
+func sourcePath(buildable Buildable) string {
+	return buildPath(buildable) + "/source"
 }
 
-func logPath(push GithubPushEvent) string {
-	return buildPath(push) + "/output.log"
+func logPath(buildable Buildable) string {
+	return buildPath(buildable) + "/output.log"
 }
 
-func resultPath(push GithubPushEvent) string {
-	return buildPath(push) + "/result.json"
+func resultPath(buildable Buildable) string {
+	return buildPath(buildable) + "/result.json"
 }
 
-func buildPath(push GithubPushEvent) string {
+func buildPath(buildable Buildable) string {
 	hash := md5.New()
-	io.WriteString(hash, push.Ref)
-	io.WriteString(hash, push.HeadCommit.ID)
+	io.WriteString(hash, buildable.Ref)
+	io.WriteString(hash, buildable.SHA)
 	return "builds/" + fmt.Sprintf("%x", hash.Sum(nil))
 }
 
@@ -188,12 +202,12 @@ func buildPath(push GithubPushEvent) string {
 //   return request.ip in ips
 // }
 
-func checkout(push GithubPushEvent, output *os.File) {
-	branch := strings.Split(push.Ref, "/")[2]
+func checkout(buildable Buildable, output *os.File) {
+	branch := strings.Split(buildable.Ref, "/")[2]
 
-	url := strings.Replace(push.Repository.URL, "https://", "https://"+retrieveAuthToken()+"@", -1)
+	url := "https://" + retrieveAuthToken() + "@github.com/" + buildable.Owner + "/" + buildable.Repo
 
-	cmd := exec.Command("git", "clone", "--depth=50", "--branch", branch, url, sourcePath(push))
+	cmd := exec.Command("git", "clone", "--depth=50", "--branch", branch, url, sourcePath(buildable))
 	cmd.Stdout = output
 	cmd.Stderr = output
 
@@ -203,8 +217,8 @@ func checkout(push GithubPushEvent, output *os.File) {
 		os.Exit(1)
 	}
 
-	cmd = exec.Command("git", "checkout", push.HeadCommit.ID)
-	cmd.Dir = sourcePath(push)
+	cmd = exec.Command("git", "checkout", buildable.SHA)
+	cmd.Dir = sourcePath(buildable)
 	cmd.Stdout = output
 	cmd.Stderr = output
 
@@ -215,9 +229,9 @@ func checkout(push GithubPushEvent, output *os.File) {
 	}
 }
 
-func execute(push GithubPushEvent, output *os.File) {
+func execute(buildable Buildable, output *os.File) {
 	cmd := exec.Command("bash", "./Builderfile")
-	cmd.Dir = sourcePath(push)
+	cmd.Dir = sourcePath(buildable)
 	cmd.Stdout = output
 	cmd.Stderr = output
 	f, err := pty.Start(cmd)
@@ -237,7 +251,7 @@ func execute(push GithubPushEvent, output *os.File) {
 
 	result := &BuildResult{success}
 	b, _ := json.Marshal(result)
-	ioutil.WriteFile(resultPath(push), b, 0600)
+	ioutil.WriteFile(resultPath(buildable), b, 0600)
 }
 
 type BuildResult struct {
