@@ -171,6 +171,10 @@ func logPath(push GithubPushEvent) string {
 	return buildPath(push) + "/output.log"
 }
 
+func resultPath(push GithubPushEvent) string {
+	return buildPath(push) + "/result.json"
+}
+
 func buildPath(push GithubPushEvent) string {
 	hash := md5.New()
 	io.WriteString(hash, push.Ref)
@@ -211,12 +215,26 @@ func checkout(push GithubPushEvent, output *os.File) {
 }
 
 func execute(push GithubPushEvent, output *os.File) {
-	output.Close()
-	cmd := exec.Command("script", "-f", "-c", "./Builderfile", "../output.log")
+	cmd := exec.Command("ssh", "-t", "-t", "localhost", "cd "+sourcePath(push)+";./Builderfile")
 	cmd.Dir = sourcePath(push)
+	cmd.Stdout = output
+	cmd.Stderr = output
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	cmd.Wait()
+
+	fmt.Println("build complete")
+	result := &BuildResult{
+		Success: cmd.ProcessState.Success(),
+	}
+	b, _ := json.Marshal(result)
+	ioutil.WriteFile(resultPath(push), b, 0600)
+}
+
+type BuildResult struct {
+	Success bool
 }
