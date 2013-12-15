@@ -90,15 +90,19 @@ type Configuration struct {
 	Repositories []Repository
 }
 
-func NewConfigurationFromFile(path string) *Configuration {
-	c := &Configuration{}
-	b, err := ioutil.ReadFile(path)
+func CurrentConfiguration() Configuration {
+	b, err := ioutil.ReadFile("builder.json")
 	if err != nil {
 		fmt.Println("Error reading config file")
 		fmt.Println(err)
-		os.Exit(1)
 	}
-	json.Unmarshal(b, c)
+
+	var c Configuration
+	err = json.Unmarshal(b, &c)
+	if err != nil {
+		fmt.Println("Error parsing config file")
+		fmt.Println(err)
+	}
 	return c
 }
 
@@ -108,7 +112,6 @@ type Repository struct {
 }
 
 var githubDomain string = "https://api.github.com"
-var configuration *Configuration
 
 func main() {
 	createHooks()
@@ -116,8 +119,8 @@ func main() {
 }
 
 func createHooks() {
-	for _, repo := range configuration.Repositories {
-		url := githubDomain + "/repos/" + repo.Owner + "/" + repo.Repository + "/hooks?access_token=" + configuration.AuthToken
+	for _, repo := range CurrentConfiguration().Repositories {
+		url := githubDomain + "/repos/" + repo.Owner + "/" + repo.Repository + "/hooks?access_token=" + CurrentConfiguration().AuthToken
 		body := `{
       "name": "web",
       "active": true,
@@ -126,7 +129,7 @@ func createHooks() {
         "pull_request"
       ],
       "config": {
-        "url": "` + configuration.Host + ":" + configuration.Port + `/hook",
+        "url": "` + CurrentConfiguration().Host + ":" + CurrentConfiguration().Port + `/hook",
         "content_type": "json"
       }
     }`
@@ -143,12 +146,11 @@ func createHooks() {
 }
 
 func init() {
-	configuration = NewConfigurationFromFile("builder.json")
 	http.HandleFunc("/hook", hookHandler)
 }
 
 func serve() {
-	http.ListenAndServe(":"+configuration.Port, nil)
+	http.ListenAndServe(":"+CurrentConfiguration().Port, nil)
 }
 
 func hookHandler(w http.ResponseWriter, r *http.Request) {
@@ -185,7 +187,7 @@ func buildID(build *Build) string {
 func checkout(build *Build, output *os.File) {
 	branch := strings.Split(build.Ref, "/")[2]
 
-	url := "https://" + configuration.AuthToken + "@github.com/" + build.Owner + "/" + build.Repo
+	url := "https://" + CurrentConfiguration().AuthToken + "@github.com/" + build.Owner + "/" + build.Repo
 
 	cmd := exec.Command("git", "clone", "--depth=50", "--branch", branch, url, build.SourcePath())
 	cmd.Stdout = output
