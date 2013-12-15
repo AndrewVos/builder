@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/howeyc/gopass"
 	"github.com/kr/pty"
 	"io"
 	"io/ioutil"
@@ -23,14 +22,33 @@ type Build struct {
 	Success  bool
 }
 
-func (b *Build) Save() {
-	path := buildID(b) + ".json"
-	marshalled, _ := json.Marshal(b)
+func (build *Build) Save() {
+	path := "build_results.json"
 
-	err := ioutil.WriteFile(path, marshalled, 0644)
+	var newBuilds []*Build
+	for _, b := range allBuilds() {
+		if buildID(b) != buildID(build) {
+			newBuilds = append(newBuilds, build)
+		}
+	}
+	newBuilds = append(newBuilds, build)
+
+	marshalled, _ := json.Marshal(newBuilds)
+	err := ioutil.WriteFile(path, marshalled, 0700)
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func allBuilds() []*Build {
+	path := "build_results.json"
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return []*Build{}
+	}
+	var allBuilds []*Build
+	err = json.Unmarshal(b, &allBuilds)
+	return allBuilds
 }
 
 func (b *Build) Path() string {
@@ -66,6 +84,7 @@ type GithubCommit struct {
 }
 
 type Configuration struct {
+	AuthToken    string
 	Host         string
 	Port         string
 	Repositories []Repository
@@ -88,66 +107,18 @@ type Repository struct {
 	Repository string
 }
 
+var githubDomain string = "https://api.github.com"
 var configuration *Configuration
 
 func main() {
-	configuration = NewConfigurationFromFile("builder.json")
-	token := retrieveAuthToken()
-	createHooks(token)
+	createHooks()
 	serve()
 }
 
-type GithubAuthorization struct {
-	Token string `json:"token"`
-}
-
-func retrieveAuthToken() string {
-	if _, err := os.Stat("AUTH_TOKEN"); os.IsNotExist(err) {
-		var username string
-		fmt.Print("Github username: ")
-		fmt.Scanln(&username)
-		fmt.Print("Github password: ")
-		password := gopass.GetPasswd()
-
-		url := "https://api.github.com/authorizations"
-		body := strings.NewReader(`{"scopes":["repo"]}`)
-		client := &http.Client{}
-		request, _ := http.NewRequest("POST", url, body)
-		request.SetBasicAuth(username, string(password))
-		response, err := client.Do(request)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		responseBody, _ := ioutil.ReadAll(response.Body)
-		response.Body.Close()
-
-		var authorization GithubAuthorization
-		err = json.Unmarshal(responseBody, &authorization)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		err = ioutil.WriteFile("AUTH_TOKEN", []byte(authorization.Token), 0644)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	token, err := ioutil.ReadFile("AUTH_TOKEN")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	return string(token)
-}
-
-func createHooks(token string) {
+func createHooks() {
 	for _, repo := range configuration.Repositories {
-		url := "https://api.github.com/repos/" + repo.Owner + "/" + repo.Repository + "/hooks?access_token=" + token
-		body := `
-    {
+		url := githubDomain + "/repos/" + repo.Owner + "/" + repo.Repository + "/hooks?access_token=" + configuration.AuthToken
+		body := `{
       "name": "web",
       "active": true,
       "events": [
@@ -167,21 +138,22 @@ func createHooks(token string) {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		responseBody, _ := ioutil.ReadAll(response.Body)
 		response.Body.Close()
-		fmt.Println(string(responseBody))
 	}
 }
 
-func serve() {
+func init() {
+	configuration = NewConfigurationFromFile("builder.json")
 	http.HandleFunc("/hook", hookHandler)
+}
+
+func serve() {
 	http.ListenAndServe(":"+configuration.Port, nil)
 }
 
 func hookHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
-	fmt.Println(string(body))
 	var push GithubPushEvent
 	json.Unmarshal(body, &push)
 
@@ -192,7 +164,11 @@ func hookHandler(w http.ResponseWriter, r *http.Request) {
 		SHA:   push.HeadCommit.ID,
 	}
 	build.Save()
-	os.MkdirAll(build.Path(), 0600)
+	err := os.MkdirAll(build.Path(), 0700)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	output, _ := os.Create(build.LogPath())
 	defer output.Close()
 	checkout(build, output)
@@ -206,15 +182,10 @@ func buildID(build *Build) string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-// func ensureHookComesFromGithub(request) {
-//   ips = get("https://api.github.com/meta")
-//   return request.ip in ips
-// }
-
 func checkout(build *Build, output *os.File) {
 	branch := strings.Split(build.Ref, "/")[2]
 
-	url := "https://" + retrieveAuthToken() + "@github.com/" + build.Owner + "/" + build.Repo
+	url := "https://" + configuration.AuthToken + "@github.com/" + build.Owner + "/" + build.Repo
 
 	cmd := exec.Command("git", "clone", "--depth=50", "--branch", branch, url, build.SourcePath())
 	cmd.Stdout = output
@@ -222,6 +193,7 @@ func checkout(build *Build, output *os.File) {
 
 	err := cmd.Run()
 	if err != nil {
+		fmt.Println("Error cloning repository")
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -251,7 +223,6 @@ func execute(build *Build, output *os.File) {
 
 	io.Copy(output, f)
 
-	fmt.Println("build complete")
 	success := true
 	if err := cmd.Wait(); err != nil {
 		fmt.Println(err)

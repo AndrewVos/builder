@@ -1,7 +1,0 @@
-{
-  "Host": "localhost",
-  "Port": "80",
-  "Repositories": [
-    {"Owner": "AndrewVos", "Repository": "builder"}
-  ]
-}
