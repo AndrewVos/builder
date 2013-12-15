@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/howeyc/gopass"
+	"github.com/kr/pty"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +13,37 @@ import (
 	"os/exec"
 	"strings"
 )
+
+type Build struct {
+	Owner    string
+	Repo     string
+	Ref      string
+	SHA      string
+	Complete bool
+	Success  bool
+}
+
+func (b *Build) Save() {
+	path := buildID(b) + ".json"
+	marshalled, _ := json.Marshal(b)
+
+	err := ioutil.WriteFile(path, marshalled, 0644)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func (b *Build) Path() string {
+	return "builds/" + buildID(b)
+}
+
+func (b *Build) LogPath() string {
+	return b.Path() + "/output.log"
+}
+
+func (b *Build) SourcePath() string {
+	return b.Path() + "/source"
+}
 
 type GithubPushEvent struct {
 	Ref        string
@@ -152,34 +184,26 @@ func hookHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(string(body))
 	var push GithubPushEvent
 	json.Unmarshal(body, &push)
-	build(push)
-}
 
-func build(push GithubPushEvent) {
-	os.MkdirAll(buildPath(push), 0600)
-	output, _ := os.Create(logPath(push))
+	build := &Build{
+		Owner: push.Repository.Owner.Name,
+		Repo:  push.Repository.Name,
+		Ref:   push.Ref,
+		SHA:   push.HeadCommit.ID,
+	}
+	build.Save()
+	os.MkdirAll(build.Path(), 0600)
+	output, _ := os.Create(build.LogPath())
 	defer output.Close()
-	checkout(push, output)
-	execute(push, output)
+	checkout(build, output)
+	execute(build, output)
 }
 
-func sourcePath(push GithubPushEvent) string {
-	return buildPath(push) + "/source"
-}
-
-func logPath(push GithubPushEvent) string {
-	return buildPath(push) + "/output.log"
-}
-
-func resultPath(push GithubPushEvent) string {
-	return buildPath(push) + "/result.json"
-}
-
-func buildPath(push GithubPushEvent) string {
+func buildID(build *Build) string {
 	hash := md5.New()
-	io.WriteString(hash, push.Ref)
-	io.WriteString(hash, push.HeadCommit.ID)
-	return "builds/" + fmt.Sprintf("%x", hash.Sum(nil))
+	io.WriteString(hash, build.Ref)
+	io.WriteString(hash, build.SHA)
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 // func ensureHookComesFromGithub(request) {
@@ -187,12 +211,12 @@ func buildPath(push GithubPushEvent) string {
 //   return request.ip in ips
 // }
 
-func checkout(push GithubPushEvent, output *os.File) {
-	branch := strings.Split(push.Ref, "/")[2]
+func checkout(build *Build, output *os.File) {
+	branch := strings.Split(build.Ref, "/")[2]
 
-	url := strings.Replace(push.Repository.URL, "https://", "https://"+retrieveAuthToken()+"@", -1)
+	url := "https://" + retrieveAuthToken() + "@github.com/" + build.Owner + "/" + build.Repo
 
-	cmd := exec.Command("git", "clone", "--depth=50", "--branch", branch, url, sourcePath(push))
+	cmd := exec.Command("git", "clone", "--depth=50", "--branch", branch, url, build.SourcePath())
 	cmd.Stdout = output
 	cmd.Stderr = output
 
@@ -202,8 +226,8 @@ func checkout(push GithubPushEvent, output *os.File) {
 		os.Exit(1)
 	}
 
-	cmd = exec.Command("git", "checkout", push.HeadCommit.ID)
-	cmd.Dir = sourcePath(push)
+	cmd = exec.Command("git", "checkout", build.SHA)
+	cmd.Dir = build.SourcePath()
 	cmd.Stdout = output
 	cmd.Stderr = output
 
@@ -214,27 +238,27 @@ func checkout(push GithubPushEvent, output *os.File) {
 	}
 }
 
-func execute(push GithubPushEvent, output *os.File) {
-	cmd := exec.Command("ssh", "-t", "-t", "localhost", "cd "+sourcePath(push)+";./Builderfile")
-	cmd.Dir = sourcePath(push)
+func execute(build *Build, output *os.File) {
+	cmd := exec.Command("bash", "./Builderfile")
+	cmd.Dir = build.SourcePath()
 	cmd.Stdout = output
 	cmd.Stderr = output
-	err := cmd.Run()
+	f, err := pty.Start(cmd)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	cmd.Wait()
+	io.Copy(output, f)
 
 	fmt.Println("build complete")
-	result := &BuildResult{
-		Success: cmd.ProcessState.Success(),
+	success := true
+	if err := cmd.Wait(); err != nil {
+		fmt.Println(err)
+		success = false
 	}
-	b, _ := json.Marshal(result)
-	ioutil.WriteFile(resultPath(push), b, 0600)
-}
 
-type BuildResult struct {
-	Success bool
+	build.Complete = true
+	build.Success = success
+	build.Save()
 }
