@@ -22,7 +22,10 @@ func init() {
 }
 
 func serve() {
-	http.ListenAndServe(":"+CurrentConfiguration().Port, nil)
+	err := http.ListenAndServe(":"+CurrentConfiguration().Port, nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func pushHandler(w http.ResponseWriter, r *http.Request) {
