@@ -64,26 +64,6 @@ func (b *Build) SourcePath() string {
 	return b.Path() + "/source"
 }
 
-type GithubPushEvent struct {
-	Ref        string
-	HeadCommit GithubCommit `json:"head_commit"`
-	Repository GithubRepository
-}
-
-type GithubRepository struct {
-	Name  string
-	URL   string
-	Owner GithubOwner
-}
-
-type GithubOwner struct {
-	Name string
-}
-
-type GithubCommit struct {
-	ID string
-}
-
 type Configuration struct {
 	AuthToken    string
 	Host         string
@@ -159,15 +139,23 @@ func serve() {
 func pushHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
-	var push GithubPushEvent
-	json.Unmarshal(body, &push)
+	push, err := simplejson.Loads(string(body))
+	if err != nil {
+		fmt.Println("Error parsing push")
+		fmt.Println(err)
+		return
+	}
 
-	refParts := strings.Split(push.Ref, "/")
+	ref, _ := push.Get("ref").String()
+	owner, _ := push.Get("repository").Get("owner").Get("name").String()
+	name, _ := push.Get("repository").Get("name").String()
+	refParts := strings.Split(ref, "/")
+	sha, _ := push.Get("head_commit").Get("id").String()
 	build := &Build{
-		Owner: push.Repository.Owner.Name,
-		Repo:  push.Repository.Name,
+		Owner: owner,
+		Repo:  name,
 		Ref:   refParts[len(refParts)-1],
-		SHA:   push.HeadCommit.ID,
+		SHA:   sha,
 	}
 	startBuild(build)
 }
@@ -179,6 +167,7 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error parsing pull request")
 		fmt.Println(err)
+		return
 	}
 
 	action, _ := pullRequest.Get("action").String()
