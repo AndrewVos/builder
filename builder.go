@@ -17,6 +17,7 @@ func main() {
 }
 
 func init() {
+	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/hooks/push", pushHandler)
 	http.HandleFunc("/hooks/pull_request", pullRequestHandler)
 }
@@ -26,6 +27,10 @@ func serve() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "builder")
 }
 
 func pushHandler(w http.ResponseWriter, r *http.Request) {
