@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"time"
 )
 
 type Build struct {
@@ -21,7 +22,7 @@ type Build struct {
 	Success  bool
 }
 
-func NewBuild(owner string, repo string, ref string, sha string) {
+func NewBuild(owner string, repo string, ref string, sha string) *Build {
 	build := &Build{
 		Owner: owner,
 		Repo:  repo,
@@ -32,7 +33,9 @@ func NewBuild(owner string, repo string, ref string, sha string) {
 	hash := md5.New()
 	io.WriteString(hash, build.Ref)
 	io.WriteString(hash, build.SHA)
-	build.ID = fmt.Sprintf("%x", hash.Sum(nil))
+	build.ID = fmt.Sprintf("%v-%x", time.Now().Unix(), hash.Sum(nil))
+
+	return build
 }
 
 func (build *Build) save() {
@@ -41,13 +44,16 @@ func (build *Build) save() {
 	var newBuilds []*Build
 	for _, b := range AllBuilds() {
 		if b.ID != build.ID {
-			newBuilds = append(newBuilds, build)
+			newBuilds = append(newBuilds, b)
 		}
 	}
 	newBuilds = append(newBuilds, build)
 
-	marshalled, _ := json.Marshal(newBuilds)
-	err := ioutil.WriteFile(path, marshalled, 0700)
+	marshalled, err := json.Marshal(newBuilds)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = ioutil.WriteFile(path, marshalled, 0700)
 	if err != nil {
 		fmt.Println(err)
 	}

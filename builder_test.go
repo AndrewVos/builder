@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func setup() {
@@ -149,5 +151,25 @@ func TestClosedPullRequest(t *testing.T) {
 
 	if len(AllBuilds()) > 0 {
 		t.Errorf("Erm, probably shouldn't build a closed pull request")
+	}
+}
+
+func TestFakeSomeBuilds(t *testing.T) {
+	fmt.Println("faking some builds")
+	setup()
+	defer cleanup()
+
+	go func() {
+		serve()
+	}()
+	for {
+		postToHooks("test-data/red_pull_request.json", "pull_request")
+		time.Sleep(10 * time.Second)
+		postToHooks("test-data/green_pull_request.json", "pull_request")
+		time.Sleep(10 * time.Second)
+		postToHooks("test-data/red_push.json", "push")
+		time.Sleep(10 * time.Second)
+		postToHooks("test-data/green_push.json", "push")
+		time.Sleep(10 * time.Second)
 	}
 }

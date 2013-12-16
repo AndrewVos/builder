@@ -1,0 +1,19 @@
+/* http://www.colourlovers.com/palette/114395/Kinda_Basic */
+
+.build .icon {
+  float: left;
+  width: 40px;
+  height: 40px;
+}
+
+.build.red .icon {
+  background-color: #EC2655;
+}
+
+.build.green .icon {
+  background-color: #B7EB34;
+}
+
+.build.blue .icon {
+  background-color: #4AC5EB;
+}

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/hoisie/mustache"
 	"github.com/likexian/simplejson"
 	"io/ioutil"
 	"net/http"
@@ -20,6 +22,11 @@ func init() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/hooks/push", pushHandler)
 	http.HandleFunc("/hooks/pull_request", pullRequestHandler)
+	http.HandleFunc("/builds", buildsHandler)
+	serveFile("/scripts/jquery-2.0.3.min.js", "public/scripts/jquery-2.0.3.min.js")
+	serveFile("/scripts/build.js", "public/scripts/build.js")
+	serveFile("/styles/build.css", "public/styles/build.css")
+	serveFile("/styles/bootstrap.min.css", "public/styles/bootstrap.min.css")
 }
 
 func serve() {
@@ -29,8 +36,15 @@ func serve() {
 	}
 }
 
+func serveFile(pattern string, filename string) {
+	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filename)
+	})
+}
+
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "builder")
+	body := mustache.RenderFile("views/home.mustache")
+	w.Write([]byte(body))
 }
 
 func pushHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,12 +62,12 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	name, _ := push.Get("repository").Get("name").String()
 	refParts := strings.Split(ref, "/")
 	sha, _ := push.Get("head_commit").Get("id").String()
-	build := &Build{
-		Owner: owner,
-		Repo:  name,
-		Ref:   refParts[len(refParts)-1],
-		SHA:   sha,
-	}
+	build := NewBuild(
+		owner,
+		name,
+		refParts[len(refParts)-1],
+		sha,
+	)
 	build.start()
 }
 
@@ -75,13 +89,19 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fullName, _ := pullRequest.Get("repository").Get("full_name").String()
 	ref, _ := pullRequest.Get("pull_request").Get("head").Get("ref").String()
 	sha, _ := pullRequest.Get("pull_request").Get("head").Get("sha").String()
-	build := &Build{
-		Owner: strings.Split(fullName, "/")[0],
-		Repo:  strings.Split(fullName, "/")[1],
-		Ref:   ref,
-		SHA:   sha,
-	}
+	build := NewBuild(
+		strings.Split(fullName, "/")[0],
+		strings.Split(fullName, "/")[1],
+		ref,
+		sha,
+	)
 	build.start()
+}
+
+func buildsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	b, _ := json.Marshal(AllBuilds())
+	w.Write(b)
 }
 
 func createHooks() {
