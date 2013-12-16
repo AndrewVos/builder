@@ -83,7 +83,7 @@ func TestRedPush(t *testing.T) {
 
 	postToHooks("test-data/red_push.json", "push")
 
-	build := allBuilds()[0]
+	build := AllBuilds()[0]
 	if build.Success {
 		t.Errorf("Build should have failed!")
 	}
@@ -99,7 +99,7 @@ func TestGreenPush(t *testing.T) {
 
 	postToHooks("test-data/green_push.json", "push")
 
-	build := allBuilds()[0]
+	build := AllBuilds()[0]
 	if build.Success == false {
 		t.Errorf("Build should have succeeded!")
 	}
@@ -115,7 +115,7 @@ func TestRedPullRequest(t *testing.T) {
 
 	postToHooks("test-data/red_pull_request.json", "pull_request")
 
-	build := allBuilds()[0]
+	build := AllBuilds()[0]
 	if build.Success {
 		t.Errorf("Build should have failed!")
 	}
@@ -131,7 +131,7 @@ func TestGreenPullRequest(t *testing.T) {
 
 	postToHooks("test-data/green_pull_request.json", "pull_request")
 
-	build := allBuilds()[0]
+	build := AllBuilds()[0]
 	if build.Success == false {
 		t.Errorf("Build should have succeeded!")
 	}
@@ -147,7 +147,7 @@ func TestClosedPullRequest(t *testing.T) {
 
 	postToHooks("test-data/closed_pull_request.json", "pull_request")
 
-	if len(allBuilds()) > 0 {
+	if len(AllBuilds()) > 0 {
 		t.Errorf("Erm, probably shouldn't build a closed pull request")
 	}
 }
