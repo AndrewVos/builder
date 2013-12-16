@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kr/pty"
+	"github.com/likexian/simplejson"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -121,50 +122,78 @@ func main() {
 func createHooks() {
 	for _, repo := range CurrentConfiguration().Repositories {
 		url := githubDomain + "/repos/" + repo.Owner + "/" + repo.Repository + "/hooks?access_token=" + CurrentConfiguration().AuthToken
-		body := `{
+
+		supportedEvents := []string{"push", "pull_request"}
+		for _, event := range supportedEvents {
+			body := `{
       "name": "web",
       "active": true,
-      "events": [
-        "push",
-        "pull_request"
-      ],
+      "events": [ "` + event + `" ],
       "config": {
-        "url": "` + CurrentConfiguration().Host + ":" + CurrentConfiguration().Port + `/hook",
+        "url": "` + CurrentConfiguration().Host + ":" + CurrentConfiguration().Port + `/hooks/` + event + `",
         "content_type": "json"
       }
     }`
 
-		client := &http.Client{}
-		request, _ := http.NewRequest("POST", url, strings.NewReader(body))
-		response, err := client.Do(request)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			client := &http.Client{}
+			request, _ := http.NewRequest("POST", url, strings.NewReader(body))
+			response, err := client.Do(request)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			response.Body.Close()
 		}
-		response.Body.Close()
 	}
 }
 
 func init() {
-	http.HandleFunc("/hook", hookHandler)
+	http.HandleFunc("/hooks/push", pushHandler)
+	http.HandleFunc("/hooks/pull_request", pullRequestHandler)
 }
 
 func serve() {
 	http.ListenAndServe(":"+CurrentConfiguration().Port, nil)
 }
 
-func hookHandler(w http.ResponseWriter, r *http.Request) {
+func pushHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
 	var push GithubPushEvent
 	json.Unmarshal(body, &push)
 
+	refParts := strings.Split(push.Ref, "/")
 	build := &Build{
 		Owner: push.Repository.Owner.Name,
 		Repo:  push.Repository.Name,
-		Ref:   push.Ref,
+		Ref:   refParts[len(refParts)-1],
 		SHA:   push.HeadCommit.ID,
 	}
+	startBuild(build)
+}
+
+func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
+	body, _ := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	pullRequest, err := simplejson.Loads(string(body))
+	if err != nil {
+		fmt.Println("Error parsing pull request")
+		fmt.Println(err)
+	}
+
+	fullName, _ := pullRequest.Get("repository").Get("full_name").String()
+	ref, _ := pullRequest.Get("pull_request").Get("head").Get("ref").String()
+	sha, _ := pullRequest.Get("pull_request").Get("head").Get("sha").String()
+	build := &Build{
+		Owner: strings.Split(fullName, "/")[0],
+		Repo:  strings.Split(fullName, "/")[1],
+		Ref:   ref,
+		SHA:   sha,
+	}
+	startBuild(build)
+}
+
+func startBuild(build *Build) {
 	build.Save()
 	err := os.MkdirAll(build.Path(), 0700)
 	if err != nil {
@@ -185,11 +214,9 @@ func buildID(build *Build) string {
 }
 
 func checkout(build *Build, output *os.File) {
-	branch := strings.Split(build.Ref, "/")[2]
-
 	url := "https://" + CurrentConfiguration().AuthToken + "@github.com/" + build.Owner + "/" + build.Repo
 
-	cmd := exec.Command("git", "clone", "--depth=50", "--branch", branch, url, build.SourcePath())
+	cmd := exec.Command("git", "clone", "--depth=50", "--branch", build.Ref, url, build.SourcePath())
 	cmd.Stdout = output
 	cmd.Stderr = output
 
