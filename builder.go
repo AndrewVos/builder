@@ -102,7 +102,10 @@ func createHooks() {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			response.Body.Close()
+			if response.StatusCode == 401 {
+				fmt.Println("Auth Token appears to be invalid")
+				os.Exit(1)
+			}
 		}
 	}
 }
