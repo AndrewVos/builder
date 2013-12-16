@@ -12,6 +12,7 @@ import (
 )
 
 type Build struct {
+	ID       string
 	Owner    string
 	Repo     string
 	Ref      string
@@ -20,12 +21,26 @@ type Build struct {
 	Success  bool
 }
 
+func NewBuild(owner string, repo string, ref string, sha string) {
+	build := &Build{
+		Owner: owner,
+		Repo:  repo,
+		Ref:   ref,
+		SHA:   sha,
+	}
+
+	hash := md5.New()
+	io.WriteString(hash, build.Ref)
+	io.WriteString(hash, build.SHA)
+	build.ID = fmt.Sprintf("%x", hash.Sum(nil))
+}
+
 func (build *Build) save() {
 	path := "build_results.json"
 
 	var newBuilds []*Build
 	for _, b := range AllBuilds() {
-		if b.ID() != build.ID() {
+		if b.ID != build.ID {
 			newBuilds = append(newBuilds, build)
 		}
 	}
@@ -36,13 +51,6 @@ func (build *Build) save() {
 	if err != nil {
 		fmt.Println(err)
 	}
-}
-
-func (build *Build) ID() string {
-	hash := md5.New()
-	io.WriteString(hash, build.Ref)
-	io.WriteString(hash, build.SHA)
-	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 func (build *Build) start() {
@@ -109,7 +117,7 @@ func (build *Build) execute(output *os.File) {
 }
 
 func (b *Build) Path() string {
-	return "builds/" + b.ID()
+	return "builds/" + b.ID
 }
 
 func (b *Build) LogPath() string {
