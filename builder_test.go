@@ -140,3 +140,14 @@ func TestGreenPullRequest(t *testing.T) {
 		t.Errorf("Expected log to contain %q. Got:\n%v", expected, string(buildOutput))
 	}
 }
+
+func TestClosedPullRequest(t *testing.T) {
+	setup()
+	defer cleanup()
+
+	postToHooks("test-data/closed_pull_request.json", "pull_request")
+
+	if len(allBuilds()) > 0 {
+		t.Errorf("Erm, probably shouldn't build a closed pull request")
+	}
+}

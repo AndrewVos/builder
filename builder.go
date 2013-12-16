@@ -181,6 +181,11 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
+	action, _ := pullRequest.Get("action").String()
+	if action == "closed" {
+		return
+	}
+
 	fullName, _ := pullRequest.Get("repository").Get("full_name").String()
 	ref, _ := pullRequest.Get("pull_request").Get("head").Get("ref").String()
 	sha, _ := pullRequest.Get("pull_request").Get("head").Get("sha").String()
