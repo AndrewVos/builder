@@ -23,8 +23,12 @@ func init() {
 	http.HandleFunc("/hooks/push", pushHandler)
 	http.HandleFunc("/hooks/pull_request", pullRequestHandler)
 	http.HandleFunc("/builds", buildsHandler)
+	http.HandleFunc("/build_output", buildOutputHandler)
+	http.HandleFunc("/build_output_raw", buildOutputRawHandler)
 	serveFile("/scripts/jquery-2.0.3.min.js", "public/scripts/jquery-2.0.3.min.js")
 	serveFile("/scripts/build.js", "public/scripts/build.js")
+	serveFile("/scripts/ansi_up.js", "public/scripts/ansi_up.js")
+	serveFile("/scripts/build_output.js", "public/scripts/build_output.js")
 	serveFile("/styles/build.css", "public/styles/build.css")
 	serveFile("/styles/bootstrap.min.css", "public/styles/bootstrap.min.css")
 }
@@ -102,6 +106,28 @@ func buildsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	b, _ := json.Marshal(AllBuilds())
 	w.Write(b)
+}
+
+func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := r.URL.Query().Get("id")
+	for _, build := range AllBuilds() {
+		if build.ID == id {
+			output := map[string]string{
+				"output": build.ReadOutput(),
+			}
+			b, _ := json.Marshal(output)
+			w.Write(b)
+			return
+		}
+	}
+}
+
+func buildOutputHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	body := mustache.RenderFile("views/build_output.mustache", map[string]string{"build_id": id})
+	w.Write([]byte(body))
 }
 
 func createHooks() {

@@ -6,19 +6,19 @@ $(document).ready(function() {
 function update() {
   $.getJSON("/builds", function(data) {
     $.each(data, function(i, build) {
-      console.log(build.ID + "-" + build.Complete);
       var container = $("#builds");
-      var id = "build_" + build.ID;
 
-      if ($("#"+id).length == 0) {
-        var buildLine = $("<div id='"+id+"' class='build'></div>");
+      if ($("#"+build.ID).length == 0) {
+        var buildLine = $("<div id='"+build.ID+"' class='build'></div>");
         var title = $("<h1>"+ build.Owner + "/" + build.Repo + "</h1>");
         var icon = $("<div class='icon'></div>");
+        var link = $("<a href='/build_output?id="+ build.ID + "'>output</a>");
         buildLine.append(icon);
         buildLine.append(title);
+        buildLine.append(link);
         container.prepend(buildLine)
       }
-      var buildLine = $("#" + id);
+      var buildLine = $("#" + build.ID);
       if (build.Complete == true) {
         buildLine.removeClass("blue");
         if (build.Success == true) {

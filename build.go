@@ -134,6 +134,14 @@ func (b *Build) SourcePath() string {
 	return b.Path() + "/source"
 }
 
+func (build *Build) ReadOutput() string {
+	b, err := ioutil.ReadFile(build.LogPath())
+	if err != nil {
+		fmt.Println(err)
+	}
+	return string(b)
+}
+
 func AllBuilds() []*Build {
 	path := "build_results.json"
 	b, err := ioutil.ReadFile(path)
