@@ -13,7 +13,7 @@ Very simple CI
 Setup a a builder.json file:
 
     {
-      "AuthToken": ""
+      "AuthToken": "",
       "Host": "",
       "Port": "",
       "Repositories": [
