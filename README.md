@@ -38,3 +38,5 @@ A typical Builderfile looks something like this:
     #!/bin/bash
 
     make test # or some other sort of test runner thingy
+
+Go to host:port to view a list of builds
