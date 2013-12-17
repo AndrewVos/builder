@@ -10,7 +10,7 @@ function update() {
 
       if ($("#"+build.ID).length == 0) {
         var buildLine = $("<div id='"+build.ID+"' class='build'></div>");
-        var title = $("<h1>"+ build.Owner + "/" + build.Repo + "</h1>");
+        var title = $("<h1>"+ build.Repo + "/" + build.Ref + "</h1>");
         var icon = $("<div class='icon'></div>");
         var link = $("<a href='/build_output?id="+ build.ID + "'>output</a>");
         buildLine.append(icon);

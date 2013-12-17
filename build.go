@@ -103,6 +103,19 @@ func (build *Build) execute(output *os.File) {
 	cmd.Dir = build.SourcePath()
 	cmd.Stdout = output
 	cmd.Stderr = output
+
+	customEnv := []string{
+		"BUILDER_BUILD_ID=" + build.ID,
+		"BUILDER_BUILD_OWNER=" + build.Owner,
+		"BUILDER_BUILD_REPO=" + build.Repo,
+		"BUILDER_BUILD_REF=" + build.Ref,
+		"BUILDER_BUILD_SHA=" + build.SHA,
+	}
+	for _, c := range os.Environ() {
+		customEnv = append(customEnv, c)
+	}
+	cmd.Env = customEnv
+
 	f, err := pty.Start(cmd)
 	if err != nil {
 		fmt.Println(err)

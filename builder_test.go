@@ -175,3 +175,26 @@ func TestFakeSomeBuilds(t *testing.T) {
 		}
 	}
 }
+
+func TestOutputEnvirons(t *testing.T) {
+	setup()
+	defer cleanup()
+	postToHooks("test-data/output_environs_push.json", "push")
+
+	build := AllBuilds()[0]
+
+	expectedLines := []string{
+		"BUILDER_BUILD_ID=" + build.ID,
+		"BUILDER_BUILD_OWNER=" + build.Owner,
+		"BUILDER_BUILD_REPO=" + build.Repo,
+		"BUILDER_BUILD_REF=" + build.Ref,
+		"BUILDER_BUILD_SHA=" + build.SHA,
+	}
+	actual := build.ReadOutput()
+
+	for _, expected := range expectedLines {
+		if strings.Contains(actual, expected) == false {
+			t.Errorf("Expected build output to contain:\n%v\nGot this instead:\n%v", expected, actual)
+		}
+	}
+}
