@@ -92,11 +92,21 @@ func (build *Build) start() {
 	}
 	output, _ := os.Create(build.LogPath())
 	defer output.Close()
-	build.checkout(output)
-	build.execute(output)
+
+	err = build.checkout(output)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = build.execute(output)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
-func (build *Build) checkout(output *os.File) {
+func (build *Build) checkout(output *os.File) error {
 	url := "https://" + CurrentConfiguration().AuthToken + "@github.com/" + build.Owner + "/" + build.Repo
 
 	cmd := exec.Command("git", "clone", "--depth=50", "--branch", build.Ref, url, build.SourcePath())
@@ -107,7 +117,7 @@ func (build *Build) checkout(output *os.File) {
 	if err != nil {
 		fmt.Println("Error cloning repository")
 		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	cmd = exec.Command("git", "checkout", build.SHA)
@@ -118,11 +128,13 @@ func (build *Build) checkout(output *os.File) {
 	err = cmd.Run()
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
+
+	return nil
 }
 
-func (build *Build) execute(output *os.File) {
+func (build *Build) execute(output *os.File) error {
 	cmd := exec.Command("bash", "./Builderfile")
 	cmd.Dir = build.SourcePath()
 	cmd.Stdout = output
@@ -143,7 +155,7 @@ func (build *Build) execute(output *os.File) {
 	f, err := pty.Start(cmd)
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	io.Copy(output, f)
@@ -157,6 +169,8 @@ func (build *Build) execute(output *os.File) {
 	build.Complete = true
 	build.Success = success
 	build.save()
+
+	return nil
 }
 
 func (b *Build) Path() string {
