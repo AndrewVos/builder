@@ -99,8 +99,7 @@ func (build *Build) start() {
 func (build *Build) checkout(output *os.File) {
 	url := "https://" + CurrentConfiguration().AuthToken + "@github.com/" + build.Owner + "/" + build.Repo
 
-	fmt.Println(build)
-	cmd := exec.Command("git", "clone", "--depth=50", url, build.SourcePath())
+	cmd := exec.Command("git", "clone", "--depth=50", "--branch", build.Ref, url, build.SourcePath())
 	cmd.Stdout = output
 	cmd.Stderr = output
 
