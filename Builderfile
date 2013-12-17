@@ -3,7 +3,7 @@
 SOURCE_DIRECTORY=`pwd`
 
 export GOPATH=/tmp/$BUILDER_BUILD_ID/gopath
-mkdir $GOPATH/src/github.com/AndrewVos
+mkdir -p $GOPATH/src/github.com/AndrewVos
 cd $GOPATH
 cp -r $SOURCE_DIRECTORY $GOPATH/src/github.com/AndrewVos/builder
 cd $GOPATH/src/github.com/AndrewVos/builder
