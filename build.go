@@ -31,9 +31,7 @@ type Commit struct {
 func init() {
 	for _, build := range AllBuilds() {
 		if build.Complete == false {
-			build.Complete = true
-			build.Success = false
-			build.save()
+			build.fail()
 		}
 	}
 }
@@ -88,6 +86,7 @@ func (build *Build) start() {
 	err := os.MkdirAll(build.Path(), 0700)
 	if err != nil {
 		fmt.Println(err)
+		build.fail()
 		return
 	}
 	output, _ := os.Create(build.LogPath())
@@ -96,14 +95,17 @@ func (build *Build) start() {
 	err = build.checkout(output)
 	if err != nil {
 		fmt.Println(err)
+		build.fail()
 		return
 	}
 
 	err = build.execute(output)
 	if err != nil {
 		fmt.Println(err)
+		build.fail()
 		return
 	}
+	build.pass()
 }
 
 func (build *Build) checkout(output *os.File) error {
@@ -115,8 +117,6 @@ func (build *Build) checkout(output *os.File) error {
 
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Error cloning repository")
-		fmt.Println(err)
 		return err
 	}
 
@@ -127,7 +127,6 @@ func (build *Build) checkout(output *os.File) error {
 
 	err = cmd.Run()
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -154,23 +153,28 @@ func (build *Build) execute(output *os.File) error {
 
 	f, err := pty.Start(cmd)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
 	io.Copy(output, f)
 
-	success := true
 	if err := cmd.Wait(); err != nil {
-		fmt.Println(err)
-		success = false
+		return err
 	}
 
-	build.Complete = true
-	build.Success = success
-	build.save()
-
 	return nil
+}
+
+func (build *Build) pass() {
+	build.Complete = true
+	build.Success = true
+	build.save()
+}
+
+func (build *Build) fail() {
+	build.Complete = true
+	build.Success = false
+	build.save()
 }
 
 func (b *Build) Path() string {
