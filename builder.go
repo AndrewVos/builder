@@ -67,11 +67,23 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	name, _ := push.Get("repository").Get("name").String()
 	refParts := strings.Split(ref, "/")
 	sha, _ := push.Get("head_commit").Get("id").String()
+
+	commits := []Commit{}
+	c, _ := push.Get("commits").Array()
+	for _, i := range c {
+		m := i.(map[string]interface{})
+		commits = append(commits, Commit{
+			SHA:   m["id"].(string),
+			Title: m["message"].(string),
+		})
+	}
+
 	build := NewBuild(
 		owner,
 		name,
 		refParts[len(refParts)-1],
 		sha,
+		commits,
 	)
 	build.start()
 }
@@ -94,11 +106,20 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fullName, _ := pullRequest.Get("repository").Get("full_name").String()
 	ref, _ := pullRequest.Get("pull_request").Get("head").Get("ref").String()
 	sha, _ := pullRequest.Get("pull_request").Get("head").Get("sha").String()
+	commitTitle, _ := pullRequest.Get("pull_request").Get("title").String()
+	commits := []Commit{
+		{
+			SHA:   sha,
+			Title: commitTitle,
+		},
+	}
+
 	build := NewBuild(
 		strings.Split(fullName, "/")[0],
 		strings.Split(fullName, "/")[1],
 		ref,
 		sha,
+		commits,
 	)
 	build.start()
 }

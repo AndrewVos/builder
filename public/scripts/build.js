@@ -13,9 +13,15 @@ function update() {
         var title = $("<h1>"+ build.Repo + "/" + build.Ref + "</h1>");
         var icon = $("<div class='icon'></div>");
         var link = $("<a href='/build_output?id="+ build.ID + "'>output</a>");
+        var commitList = $("<ul></ul>");
+        $.each(build.Commits, function(i, commit) {
+          commitList.append($("<li>"+ commit.SHA.slice(0,7) + " " + commit.Title + "</li>"));
+        });
+
         buildLine.append(icon);
         buildLine.append(title);
         buildLine.append(link);
+        buildLine.append(commitList);
         container.prepend(buildLine)
       }
       var buildLine = $("#" + build.ID);
