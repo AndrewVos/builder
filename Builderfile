@@ -1,4 +1,5 @@
 #!/bin/bash
 
+echo $GOPATH
 go get
 go test
