@@ -30,6 +30,7 @@ func init() {
 	serveFile("/scripts/ansi_up.js", "public/scripts/ansi_up.js")
 	serveFile("/scripts/build_output.js", "public/scripts/build_output.js")
 	serveFile("/styles/build.css", "public/styles/build.css")
+	serveFile("/styles/build_output.css", "public/styles/build_output.css")
 	serveFile("/styles/bootstrap.min.css", "public/styles/bootstrap.min.css")
 }
 
