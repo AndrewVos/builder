@@ -1,12 +1,3 @@
 #!/bin/bash -x
 
-mkdir gopath
-export GOPATH=`pwd`/gopath
-mkdir -p gopath/src/github.com/AndrewVos
-cp -r . gopath/src/github.com/AndrewVos/builder
-echo $GOPATH
-pwd
-cd gopath/src/github.com/AndrewVos/builder
-pwd
-go get
-go test
+echo $BUILDER_BUILD_ID
