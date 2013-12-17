@@ -1,5 +1,4 @@
 #!/bin/bash
 
 go get
-go test -i
 go test
