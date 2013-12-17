@@ -7,5 +7,6 @@ ln -s `pwd` `pwd`/gopath/src/github.com/AndrewVos/builder
 echo $GOPATH
 pwd
 cd gopath/src/github.com/AndrewVos/builder
+pwd
 go get
 go test
