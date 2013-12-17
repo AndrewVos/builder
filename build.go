@@ -22,6 +22,16 @@ type Build struct {
 	Success  bool
 }
 
+func init() {
+	for _, build := range AllBuilds() {
+		if build.Complete == false {
+			build.Complete = true
+			build.Success = false
+			build.save()
+		}
+	}
+}
+
 func NewBuild(owner string, repo string, ref string, sha string) *Build {
 	build := &Build{
 		Owner: owner,
