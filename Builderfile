@@ -1,5 +1,5 @@
 #!/bin/bash -x
 
-echo $GOPATH
+export $GOPATH=`pwd`
 go get
 go test
