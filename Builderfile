@@ -3,7 +3,7 @@
 mkdir gopath
 export GOPATH=`pwd`/gopath
 mkdir -p gopath/src/github.com/AndrewVos
-ln -s `pwd` `pwd`/gopath/src/github.com/AndrewVos/builder
+cp -r . gopath/src/github.com/AndrewVos/builder
 echo $GOPATH
 pwd
 cd gopath/src/github.com/AndrewVos/builder
