@@ -1,5 +1,8 @@
 #!/bin/bash -x
 
-export GOPATH=`pwd`
+mkdir gopath
+export GOPATH=`pwd`/gopath
+mkdir -p gopath/src/github.com/AndrewVos
+ln -s `pwd` `pwd`/gopath/src/github.com/AndrewVos/builder
 go get
 go test
