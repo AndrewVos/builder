@@ -11,10 +11,6 @@ import (
 )
 
 func setup() {
-	wd, _ := os.Getwd()
-	BuilderRoot = wd + "/builder-test-area"
-	os.MkdirAll(BuilderRoot, 0700)
-
 	builderJson := `{
       "AuthToken": "lolsszz",
       "Host": "http://example.org",
@@ -24,12 +20,13 @@ func setup() {
       ]
     }`
 	builderJson = strings.TrimSpace(builderJson)
-	ioutil.WriteFile(BuilderRoot+"/builder.json", []byte(builderJson), 0700)
+	ioutil.WriteFile("builder.json", []byte(builderJson), 0700)
 }
 
 func cleanup() {
-	BuilderRoot, _ = os.Getwd()
-	os.RemoveAll("builder-test-area")
+	os.RemoveAll("builds")
+	os.Remove("builder.json")
+	os.Remove("build_results.json")
 }
 
 func postToHooks(path string, event string) {

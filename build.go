@@ -56,7 +56,7 @@ func NewBuild(owner string, repo string, ref string, sha string, commits []Commi
 }
 
 func BuildResultsPath() string {
-	return BuilderRoot + "/build_results.json"
+	return "build_results.json"
 }
 
 func (build *Build) save() {
@@ -160,7 +160,7 @@ func (build *Build) execute(output *os.File) {
 }
 
 func (b *Build) Path() string {
-	return BuilderRoot + "/builds/" + b.ID
+	return "builds/" + b.ID
 }
 
 func (b *Build) LogPath() string {

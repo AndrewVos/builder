@@ -12,7 +12,6 @@ import (
 )
 
 var githubDomain string = "https://api.github.com"
-var BuilderRoot string
 
 func main() {
 	createHooks()
@@ -20,8 +19,6 @@ func main() {
 }
 
 func init() {
-	BuilderRoot, _ = os.Getwd()
-
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/hooks/push", pushHandler)
 	http.HandleFunc("/hooks/pull_request", pullRequestHandler)
