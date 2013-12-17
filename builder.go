@@ -65,7 +65,6 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	ref, _ := push.Get("ref").String()
 	owner, _ := push.Get("repository").Get("owner").Get("name").String()
 	name, _ := push.Get("repository").Get("name").String()
-	refParts := strings.Split(ref, "/")
 	sha, _ := push.Get("head_commit").Get("id").String()
 
 	commits := []Commit{}
@@ -81,7 +80,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	build := NewBuild(
 		owner,
 		name,
-		refParts[len(refParts)-1],
+		strings.Replace(ref, "refs/heads/", "", -1),
 		sha,
 		commits,
 	)
