@@ -55,9 +55,11 @@ func NewBuild(owner string, repo string, ref string, sha string, commits []Commi
 	return build
 }
 
-func (build *Build) save() {
-	path := "build_results.json"
+func BuildResultsPath() string {
+	return BuilderRoot + "/build_results.json"
+}
 
+func (build *Build) save() {
 	allBuilds := AllBuilds()
 	added := false
 
@@ -75,7 +77,7 @@ func (build *Build) save() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = ioutil.WriteFile(path, marshalled, 0700)
+	err = ioutil.WriteFile(BuildResultsPath(), marshalled, 0700)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -158,7 +160,7 @@ func (build *Build) execute(output *os.File) {
 }
 
 func (b *Build) Path() string {
-	return "builds/" + b.ID
+	return BuilderRoot + "/builds/" + b.ID
 }
 
 func (b *Build) LogPath() string {
@@ -178,8 +180,7 @@ func (build *Build) ReadOutput() string {
 }
 
 func AllBuilds() []*Build {
-	path := "build_results.json"
-	b, err := ioutil.ReadFile(path)
+	b, err := ioutil.ReadFile(BuildResultsPath())
 	if err != nil {
 		return []*Build{}
 	}
