@@ -41,15 +41,20 @@ func NewBuild(owner string, repo string, ref string, sha string) *Build {
 func (build *Build) save() {
 	path := "build_results.json"
 
-	var newBuilds []*Build
-	for _, b := range AllBuilds() {
-		if b.ID != build.ID {
-			newBuilds = append(newBuilds, b)
+	allBuilds := AllBuilds()
+	added := false
+
+	for i, b := range allBuilds {
+		if b.ID == build.ID {
+			allBuilds[i] = build
+			added = true
 		}
 	}
-	newBuilds = append(newBuilds, build)
+	if !added {
+		allBuilds = append(allBuilds, build)
+	}
 
-	marshalled, err := json.Marshal(newBuilds)
+	marshalled, err := json.Marshal(allBuilds)
 	if err != nil {
 		fmt.Println(err)
 	}
