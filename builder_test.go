@@ -11,6 +11,9 @@ import (
 )
 
 func setup() {
+	os.MkdirAll("builder-test-area", 0700)
+	os.Chdir("builder-test-area")
+
 	builderJson := `{
       "AuthToken": "lolsszz",
       "Host": "http://example.org",
@@ -24,9 +27,8 @@ func setup() {
 }
 
 func cleanup() {
-	os.RemoveAll("builds")
-	os.Remove("build_results.json")
-	os.Remove("builder.json")
+	os.Chdir("../")
+	os.RemoveAll("builder-test-area")
 }
 
 func postToHooks(path string, event string) {
@@ -82,7 +84,7 @@ func TestRedPush(t *testing.T) {
 	setup()
 	defer cleanup()
 
-	postToHooks("test-data/red_push.json", "push")
+	postToHooks("../test-data/red_push.json", "push")
 
 	build := AllBuilds()[0]
 	if build.Success {
@@ -98,7 +100,7 @@ func TestGreenPush(t *testing.T) {
 	setup()
 	defer cleanup()
 
-	postToHooks("test-data/green_push.json", "push")
+	postToHooks("../test-data/green_push.json", "push")
 
 	build := AllBuilds()[0]
 	if build.Success == false {
@@ -114,7 +116,7 @@ func TestRedPullRequest(t *testing.T) {
 	setup()
 	defer cleanup()
 
-	postToHooks("test-data/red_pull_request.json", "pull_request")
+	postToHooks("../test-data/red_pull_request.json", "pull_request")
 
 	build := AllBuilds()[0]
 	if build.Success {
@@ -130,7 +132,7 @@ func TestGreenPullRequest(t *testing.T) {
 	setup()
 	defer cleanup()
 
-	postToHooks("test-data/green_pull_request.json", "pull_request")
+	postToHooks("../test-data/green_pull_request.json", "pull_request")
 
 	build := AllBuilds()[0]
 	if build.Success == false {
@@ -146,7 +148,7 @@ func TestClosedPullRequest(t *testing.T) {
 	setup()
 	defer cleanup()
 
-	postToHooks("test-data/closed_pull_request.json", "pull_request")
+	postToHooks("../test-data/closed_pull_request.json", "pull_request")
 
 	if len(AllBuilds()) > 0 {
 		t.Errorf("Erm, probably shouldn't build a closed pull request")
@@ -162,15 +164,15 @@ func TestFakeSomeBuilds(t *testing.T) {
 			serve()
 		}()
 		for {
-			postToHooks("test-data/red_pull_request.json", "pull_request")
+			postToHooks("../test-data/red_pull_request.json", "pull_request")
 			time.Sleep(10 * time.Second)
-			postToHooks("test-data/green_pull_request.json", "pull_request")
+			postToHooks("../test-data/green_pull_request.json", "pull_request")
 			time.Sleep(10 * time.Second)
-			postToHooks("test-data/red_push.json", "push")
+			postToHooks("../test-data/red_push.json", "push")
 			time.Sleep(10 * time.Second)
-			postToHooks("test-data/green_push.json", "push")
+			postToHooks("../test-data/green_push.json", "push")
 			time.Sleep(10 * time.Second)
-			postToHooks("test-data/slow_pull_request.json", "pull_request")
+			postToHooks("../test-data/slow_pull_request.json", "pull_request")
 			time.Sleep(1000000 * time.Second)
 		}
 	}
@@ -179,7 +181,7 @@ func TestFakeSomeBuilds(t *testing.T) {
 func TestOutputEnvirons(t *testing.T) {
 	setup()
 	defer cleanup()
-	postToHooks("test-data/output_environs_push.json", "push")
+	postToHooks("../test-data/output_environs_push.json", "push")
 
 	build := AllBuilds()[0]
 
@@ -203,7 +205,7 @@ func TestStoresPullRequestInfo(t *testing.T) {
 	setup()
 	defer cleanup()
 
-	postToHooks("test-data/green_pull_request.json", "pull_request")
+	postToHooks("../test-data/green_pull_request.json", "pull_request")
 
 	build := AllBuilds()[0]
 	expectedCommit := Commit{SHA: "7f39d6495acae9db022cc20e7f0d940158e0337d", Title: "empty"}
@@ -216,7 +218,7 @@ func TestStoresPushInfo(t *testing.T) {
 	setup()
 	defer cleanup()
 
-	postToHooks("test-data/green_push.json", "push")
+	postToHooks("../test-data/green_push.json", "push")
 
 	build := AllBuilds()[0]
 	if len(build.Commits) != 2 {
