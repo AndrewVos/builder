@@ -56,7 +56,6 @@ func NewBuild(owner string, repo string, ref string, sha string, commits []Commi
 }
 
 func BuildResultsPath() string {
-	fmt.Println(BuilderRoot)
 	return BuilderRoot + "/build_results.json"
 }
 
