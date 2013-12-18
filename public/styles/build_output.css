@@ -7,7 +7,8 @@ pre {
   line-height: 1.5em;
 }
 
-.line.focused {
+.line.focused, .line:hover {
+  cursor: pointer;
   background-color: #D4F4DF;
 }
 

@@ -147,7 +147,7 @@ func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 			raw = raw[start:]
 			output := map[string]interface{}{
 				"length": len(raw),
-				"output": raw,
+				"output": AnsiToHtml(raw),
 			}
 			b, _ := json.Marshal(output)
 			w.Write(b)

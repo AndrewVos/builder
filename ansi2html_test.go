@@ -44,7 +44,7 @@ func TestReplacesInvalidHtmlCharacters(t *testing.T) {
 
 func TestAddsClickableLines(t *testing.T) {
 	ansi := "line1\nline2"
-	expected := `<div id="line1" class="line"><a href="#line1">1</a>line1</div><div id="line2" class="line"><a href="#line2">2</a>line2</div>`
+	expected := `<div class="line">line1</div><div class="line">line2</div>`
 	if AnsiToHtml(ansi) != expected {
 		t.Errorf("\nExpected:\n%v\nGot:\n%v\n", expected, AnsiToHtml(ansi))
 	}

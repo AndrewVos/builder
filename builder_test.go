@@ -174,13 +174,9 @@ func TestFakeSomeBuilds(t *testing.T) {
 		}()
 		for {
 			postToHooks("test-data/red_pull_request.json", "pull_request")
-			time.Sleep(10 * time.Second)
 			postToHooks("test-data/green_pull_request.json", "pull_request")
-			time.Sleep(10 * time.Second)
 			postToHooks("test-data/red_push.json", "push")
-			time.Sleep(10 * time.Second)
 			postToHooks("test-data/green_push.json", "push")
-			time.Sleep(10 * time.Second)
 			postToHooks("test-data/slow_pull_request.json", "pull_request")
 			time.Sleep(1000000 * time.Second)
 		}

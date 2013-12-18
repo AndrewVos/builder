@@ -8,23 +8,28 @@ $(document).ready(function() {
         window.scrollTo(0, document.body.scrollHeight);
       }
     } else {
-      updateSelectedLineNumber();
+      index = location.hash.replace("#line", "");
+      console.log(index);
+      element = $(".line").get(index);
+      selectLine($(element));
     }
   });
+});
+
+$(document).on("click", ".line", function() {
+  selectLine($(this));
 });
 
 $(window).scroll(function() {
    window.autoScroll = $(window).scrollTop() + $(window).height() == $(document).height();
 });
 
-$(window).on('hashchange', function() {
-  updateSelectedLineNumber();
-});
-
-function updateSelectedLineNumber() {
+function selectLine(element) {
+  hash = "#line" + element.index();
+  location.hash = hash;
   $(".line.focused").removeClass("focused");
-  $(location.hash).addClass("focused");
-  window.scrollTo(0, $(location.hash).offset().top);
+  element.addClass("focused");
+  window.scrollTo(0, element.offset().top);
 }
 
 function update(success) {

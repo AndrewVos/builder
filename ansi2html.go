@@ -36,13 +36,8 @@ func AnsiToHtml(ansi string) string {
 	})
 	ansi = strings.Replace(ansi, "\x1b[0m", "</span>", -1)
 
-	re = regexp.MustCompile("\n")
-	line := 1
-	ansi = re.ReplaceAllStringFunc(ansi, func(match string) string {
-		line += 1
-		s := strconv.Itoa(line)
-		return `</div><div id="line` + s + `" class="line"><a href="#line` + s + `">` + s + `</a>`
-	})
-	ansi = `<div id="line1" class="line"><a href="#line1">` + "1" + `</a>` + ansi + "</div>"
+	ansi = strings.Replace(ansi, "\n", `</div><div class="line">`, -1)
+	ansi = `<div class="line">` + ansi + "</div>"
+
 	return ansi
 }
