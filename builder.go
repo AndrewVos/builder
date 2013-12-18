@@ -62,6 +62,12 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	buildDeleted, _ := push.Get("deleted").Bool()
+	if buildDeleted {
+		fmt.Println("branch deleted.")
+		return
+	}
+
 	ref, _ := push.Get("ref").String()
 	owner, _ := push.Get("repository").Get("owner").Get("name").String()
 	name, _ := push.Get("repository").Get("name").String()

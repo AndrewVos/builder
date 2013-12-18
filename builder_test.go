@@ -142,6 +142,17 @@ func TestGreenPullRequest(t *testing.T) {
 	}
 }
 
+func TestDeletedBranch(t *testing.T) {
+	setup()
+	defer cleanup()
+
+	postToHooks("test-data/delete_push.json", "push")
+
+	if len(AllBuilds()) > 0 {
+		t.Errorf("Tried to build a deleted branch.")
+	}
+}
+
 func TestClosedPullRequest(t *testing.T) {
 	setup()
 	defer cleanup()
