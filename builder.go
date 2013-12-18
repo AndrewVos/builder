@@ -55,6 +55,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 func pushHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
+	fmt.Println(string(body))
 	push, err := simplejson.Loads(string(body))
 	if err != nil {
 		fmt.Println("Error parsing push")
@@ -90,6 +91,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
+	fmt.Println(string(body))
 	pullRequest, err := simplejson.Loads(string(body))
 	if err != nil {
 		fmt.Println("Error parsing pull request")
