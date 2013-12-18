@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -137,10 +138,12 @@ func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	id := r.URL.Query().Get("id")
+	start, _ := strconv.Atoi(r.URL.Query().Get("start"))
 	for _, build := range AllBuilds() {
 		if build.ID == id {
+			raw := build.ReadOutput()
 			output := map[string]string{
-				"output": build.ReadOutput(),
+				"output": raw[start:len(raw)],
 			}
 			b, _ := json.Marshal(output)
 			w.Write(b)
