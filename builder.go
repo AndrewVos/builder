@@ -63,6 +63,11 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deleted, err := push.Get("deleted").Bool()
+	if err == nil && deleted {
+		return
+	}
+
 	ref, _ := push.Get("ref").String()
 	owner, _ := push.Get("repository").Get("owner").Get("name").String()
 	name, _ := push.Get("repository").Get("name").String()

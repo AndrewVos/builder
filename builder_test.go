@@ -153,6 +153,17 @@ func TestClosedPullRequest(t *testing.T) {
 	}
 }
 
+func TestDeleteBranch(t *testing.T) {
+	setup()
+	defer cleanup()
+
+	postToHooks("test-data/delete_branch_push.json", "push")
+
+	if len(AllBuilds()) > 0 {
+		t.Errorf("Erm, probably shouldn't build a delete branch push")
+	}
+}
+
 func TestFakeSomeBuilds(t *testing.T) {
 	if os.Getenv("FAKE_BUILDS") != "" {
 		setup()

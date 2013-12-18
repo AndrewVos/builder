@@ -1,0 +1,5 @@
+{
+  "ref":"refs/heads/some-branch",
+  "deleted":true,
+  "forced":true
+}
