@@ -22,15 +22,15 @@ func AnsiToHtml(ansi string) string {
 	ansi = strings.Replace(ansi, `&`, `&amp;`, -1)
 	ansi = strings.Replace(ansi, `>`, `&gt;`, -1)
 	ansi = strings.Replace(ansi, `<`, `&lt;`, -1)
-	re := regexp.MustCompile(`\\e\[\d\dm`)
+	re := regexp.MustCompile("\x1b\\[\\d\\dm")
 	ansi = re.ReplaceAllStringFunc(ansi, func(match string) string {
 		for code, name := range ansiColours {
 			if strings.Contains(match, strconv.Itoa(code)) {
-				return strings.Replace(match, `\e[`+strconv.Itoa(code)+`m`, `<span style="color: `+name+`;">`, 1)
+				return `<span style="color: ` + name + `;">`
 			}
 		}
 		return match
 	})
-	ansi = strings.Replace(ansi, `\e[0m`, "</span>", -1)
+	ansi = strings.Replace(ansi, "\x1b[0m", "</span>", -1)
 	return ansi
 }
