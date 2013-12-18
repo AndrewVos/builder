@@ -1,19 +1,9 @@
 window.autoScroll = true;
 window.downloadedOutputBytes = 0;
+window.scrolledToHash = false;
 
 $(document).ready(function() {
-  update(function() {
-    if (location.hash == "") {
-      if (window.autoScroll) {
-        window.scrollTo(0, document.body.scrollHeight);
-      }
-    } else {
-      index = location.hash.replace("#line", "");
-      console.log(index);
-      element = $(".line").get(index);
-      selectLine($(element));
-    }
-  });
+  update();
 });
 
 $(document).on("click", ".line", function() {
@@ -21,7 +11,11 @@ $(document).on("click", ".line", function() {
 });
 
 $(window).scroll(function() {
-   window.autoScroll = $(window).scrollTop() + $(window).height() == $(document).height();
+   if (window.autoScroll = $(window).scrollTop() + $(window).height() == $(document).height()) {
+     return true;
+   } else {
+     return false;
+   }
 });
 
 function selectLine(element) {
@@ -32,13 +26,20 @@ function selectLine(element) {
   window.scrollTo(0, element.offset().top);
 }
 
-function update(success) {
+function update() {
   $.getJSON("/build_output_raw?id=" + $("#build_id").val() + "&start=" + window.downloadedOutputBytes, function(data) {
     if (data.output != "") {
       window.downloadedOutputBytes += data.length;
       $("#output").append($(data.output));
-      if(typeof success == 'function') {
-        success();
+      if (window.scrolledToHash == false && location.hash != "") {
+        index = location.hash.replace("#line", "");
+        console.log(index);
+        element = $(".line").get(index);
+        selectLine($(element));
+      } else {
+        if (window.autoScroll) {
+          window.scrollTo(0, document.body.scrollHeight);
+        }
       }
     }
     setTimeout(update, 1000);
