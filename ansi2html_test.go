@@ -25,6 +25,14 @@ func TestConvertsANSIToHtml(t *testing.T) {
 	testConvertsColour(t, 90, "grey")
 }
 
+func TestBoldensText(t *testing.T) {
+	ansi := `some text, some ` + "\x1b[1m" + `bold text` + "\x1b[0m"
+	expected := `some text, some <span style="font-weight: bold;">bold text</span>`
+	if AnsiToHtml(ansi) != expected {
+		t.Errorf("\nExpected:\n%v\nGot:\n%v\n", expected, AnsiToHtml(ansi))
+	}
+}
+
 func TestReplacesInvalidHtmlCharacters(t *testing.T) {
 	ansi := "greater than >, less than <, and ampersand &"
 	expected := "greater than &gt;, less than &lt;, and ampersand &amp;"
