@@ -32,6 +32,7 @@ function update() {
       window.downloadedOutputBytes += data.length;
       $("#output").append($(data.output));
       if (window.scrolledToHash == false && location.hash != "") {
+        window.scrolledToHash = true;
         index = location.hash.replace("#line", "");
         console.log(index);
         element = $(".line").get(index);
