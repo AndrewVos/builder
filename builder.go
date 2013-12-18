@@ -27,7 +27,6 @@ func init() {
 	http.HandleFunc("/build_output_raw", buildOutputRawHandler)
 	serveFile("/scripts/jquery-2.0.3.min.js", "public/scripts/jquery-2.0.3.min.js")
 	serveFile("/scripts/build.js", "public/scripts/build.js")
-	serveFile("/scripts/ansi_up.js", "public/scripts/ansi_up.js")
 	serveFile("/scripts/build_output.js", "public/scripts/build_output.js")
 	serveFile("/styles/build.css", "public/styles/build.css")
 	serveFile("/styles/build_output.css", "public/styles/build_output.css")

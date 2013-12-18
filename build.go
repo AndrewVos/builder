@@ -194,7 +194,7 @@ func (build *Build) ReadOutput() string {
 	if err != nil {
 		fmt.Println(err)
 	}
-	return string(b)
+	return AnsiToHtml(string(b))
 }
 
 func AllBuilds() []*Build {
