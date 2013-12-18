@@ -197,6 +197,15 @@ func (build *Build) ReadOutput() string {
 	return AnsiToHtml(string(b))
 }
 
+func FindBuildById(id string) *Build {
+	for _, build := range AllBuilds() {
+		if build.ID == id {
+			return build
+		}
+	}
+	return nil
+}
+
 func AllBuilds() []*Build {
 	b, err := ioutil.ReadFile(BuildResultsPath())
 	if err != nil {

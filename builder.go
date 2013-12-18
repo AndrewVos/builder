@@ -26,12 +26,13 @@ func init() {
 	http.HandleFunc("/builds", buildsHandler)
 	http.HandleFunc("/build_output", buildOutputHandler)
 	http.HandleFunc("/build_output_raw", buildOutputRawHandler)
-	serveFile("/scripts/jquery-2.0.3.min.js", "public/scripts/jquery-2.0.3.min.js")
-	serveFile("/scripts/build.js", "public/scripts/build.js")
-	serveFile("/scripts/build_output.js", "public/scripts/build_output.js")
-	serveFile("/styles/build.css", "public/styles/build.css")
-	serveFile("/styles/build_output.css", "public/styles/build_output.css")
-	serveFile("/styles/bootstrap.min.css", "public/styles/bootstrap.min.css")
+
+	serveFile("public/scripts/jquery-2.0.3.min.js")
+	serveFile("public/scripts/build.js")
+	serveFile("public/scripts/build_output.js")
+	serveFile("public/styles/build.css")
+	serveFile("public/styles/build_output.css")
+	serveFile("public/styles/bootstrap.min.css")
 }
 
 func serve() {
@@ -41,7 +42,8 @@ func serve() {
 	}
 }
 
-func serveFile(pattern string, filename string) {
+func serveFile(filename string) {
+	pattern := strings.Replace(filename, "public", "", 1)
 	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filename)
 	})

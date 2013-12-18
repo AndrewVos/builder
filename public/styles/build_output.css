@@ -2,3 +2,27 @@ pre {
   background-color: transparent;
   border: 0;
 }
+
+.line {
+  line-height: 1.5em;
+}
+
+.line.focused {
+  background-color: #D4F4DF;
+}
+
+#output {
+  padding-top: 10px;
+}
+
+.line a {
+  display: inline-block;
+  position: relative;
+  left: -5em;
+  margin-right: -5em;
+
+  width: 5em;
+  line-height: 1.5em;
+  text-align: center;
+  color: lightgrey;
+}
