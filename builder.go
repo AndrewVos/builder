@@ -98,7 +98,7 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	action, _ := pullRequest.Get("action").String()
-	if action == "closed" {
+	if action != "opened" {
 		return
 	}
 
