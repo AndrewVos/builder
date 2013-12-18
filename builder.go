@@ -142,8 +142,10 @@ func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 	for _, build := range AllBuilds() {
 		if build.ID == id {
 			raw := build.ReadOutput()
-			output := map[string]string{
-				"output": raw[start:len(raw)],
+			raw = raw[start:]
+			output := map[string]interface{}{
+				"length": len(raw),
+				"output": raw,
 			}
 			b, _ := json.Marshal(output)
 			w.Write(b)

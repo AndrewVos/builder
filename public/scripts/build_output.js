@@ -10,17 +10,17 @@ $(window).scroll(function() {
 });
 
 $(document).ready(function() {
-  document.scroll
   update();
 });
 
 function update() {
   $.getJSON("/build_output_raw?id=" + $("#build_id").val() + "&start=" + window.downloadedOutputBytes, function(data) {
-    e = document.getElementById("output");
-    window.downloadedOutputBytes += data.output.length;
-    e.innerHTML = e.innerHTML + data.output;
-    if (window.autoScroll) {
-      window.scrollTo(0,document.body.scrollHeight);
+    if (data.output != "") {
+      window.downloadedOutputBytes += data.length;
+      $("#output").append($("<span>"+data.output+"<span>"));
+      if (window.autoScroll) {
+        window.scrollTo(0, document.body.scrollHeight);
+      }
     }
     setTimeout(update, 1000);
   });
