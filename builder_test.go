@@ -191,6 +191,7 @@ func TestOutputEnvirons(t *testing.T) {
 	build := AllBuilds()[0]
 
 	expectedLines := []string{
+		"BUILDER_BUILD_URL=" + build.URL,
 		"BUILDER_BUILD_ID=" + build.ID,
 		"BUILDER_BUILD_OWNER=" + build.Owner,
 		"BUILDER_BUILD_REPO=" + build.Repo,

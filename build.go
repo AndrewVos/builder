@@ -14,6 +14,7 @@ import (
 
 type Build struct {
 	ID       string
+	URL      string
 	Owner    string
 	Repo     string
 	Ref      string
@@ -49,6 +50,8 @@ func NewBuild(owner string, repo string, ref string, sha string, commits []Commi
 	io.WriteString(hash, build.Ref)
 	io.WriteString(hash, build.SHA)
 	build.ID = fmt.Sprintf("%v-%x", time.Now().Unix(), hash.Sum(nil))
+
+	build.URL = CurrentConfiguration().Host + ":" + CurrentConfiguration().Port + "/build_output?id=" + build.ID
 
 	return build
 }
@@ -140,6 +143,7 @@ func (build *Build) execute(output *os.File) error {
 	cmd.Stderr = output
 
 	customEnv := []string{
+		"BUILDER_BUILD_URL=" + build.URL,
 		"BUILDER_BUILD_ID=" + build.ID,
 		"BUILDER_BUILD_OWNER=" + build.Owner,
 		"BUILDER_BUILD_REPO=" + build.Repo,
