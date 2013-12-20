@@ -7,16 +7,8 @@ import (
 )
 
 func TestBuildUrl(t *testing.T) {
-	builderJson := `{
-      "AuthToken": "lolsszz",
-      "Host": "http://example.org",
-      "Port": "1212",
-      "Repositories": [
-        {"Owner": "AndrewVos", "Repository": "builder"}
-      ]
-    }`
-	builderJson = strings.TrimSpace(builderJson)
-	ioutil.WriteFile("data/builder.json", []byte(builderJson), 0700)
+	setup()
+	defer cleanup()
 
 	build := NewBuild("", "", "", "", nil)
 	expected := "http://example.org:1212/build_output?id=" + build.ID
@@ -26,6 +18,9 @@ func TestBuildUrl(t *testing.T) {
 }
 
 func TestBuildUrlPort80(t *testing.T) {
+	setup()
+	defer cleanup()
+
 	builderJson := `{
       "AuthToken": "lolsszz",
       "Host": "http://example.org",
