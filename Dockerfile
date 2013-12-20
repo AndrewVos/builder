@@ -13,3 +13,4 @@ RUN apt-get install -y --force-yes git-core
 ADD . /gopath/src/github.com/AndrewVos/builder
 WORKDIR /gopath/src/github.com/AndrewVos/builder
 RUN go get
+RUN go build
