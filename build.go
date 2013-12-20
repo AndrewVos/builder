@@ -51,7 +51,11 @@ func NewBuild(owner string, repo string, ref string, sha string, commits []Commi
 	io.WriteString(hash, build.SHA)
 	build.ID = fmt.Sprintf("%v-%x", time.Now().Unix(), hash.Sum(nil))
 
-	build.URL = CurrentConfiguration().Host + ":" + CurrentConfiguration().Port + "/build_output?id=" + build.ID
+	build.URL = CurrentConfiguration().Host
+	if CurrentConfiguration().Port != "80" {
+		build.URL += ":" + CurrentConfiguration().Port
+	}
+	build.URL += "/build_output?id=" + build.ID
 
 	return build
 }
