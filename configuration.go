@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 )
 
 type Configuration struct {
@@ -13,7 +14,12 @@ type Configuration struct {
 }
 
 func CurrentConfiguration() Configuration {
-	b, err := ioutil.ReadFile("builder.json")
+	path := "builder.json"
+	if len(os.Args) == 3 && os.Args[1] == "-c" {
+		path = os.Args[2]
+	}
+
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
