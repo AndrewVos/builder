@@ -16,7 +16,7 @@ func TestBuildUrl(t *testing.T) {
       ]
     }`
 	builderJson = strings.TrimSpace(builderJson)
-	ioutil.WriteFile("builder.json", []byte(builderJson), 0700)
+	ioutil.WriteFile("data/builder.json", []byte(builderJson), 0700)
 
 	build := NewBuild("", "", "", "", nil)
 	expected := "http://example.org:1212/build_output?id=" + build.ID
@@ -35,7 +35,7 @@ func TestBuildUrlPort80(t *testing.T) {
       ]
     }`
 	builderJson = strings.TrimSpace(builderJson)
-	ioutil.WriteFile("builder.json", []byte(builderJson), 0700)
+	ioutil.WriteFile("data/builder.json", []byte(builderJson), 0700)
 
 	build := NewBuild("", "", "", "", nil)
 	expected := "http://example.org/build_output?id=" + build.ID

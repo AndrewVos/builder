@@ -11,7 +11,7 @@ ENV PATH $PATH:$GOPATH/bin:/usr/local/go/bin
 RUN apt-get install -y --force-yes git-core
 
 ADD . /gopath/src/github.com/AndrewVos/builder
+RUN cd /gopath/src/github.com/AndrewVos/builder && \
+    go get && \
+    go build
 WORKDIR /gopath/src/github.com/AndrewVos/builder
-RUN go get
-RUN go build
-RUN mv /gopath/src/github.com/AndrewVos/builder /builder

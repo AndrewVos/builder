@@ -11,6 +11,7 @@ import (
 )
 
 func setup() {
+	os.Mkdir("data", 0700)
 	builderJson := `{
       "AuthToken": "lolsszz",
       "Host": "http://example.org",
@@ -20,13 +21,11 @@ func setup() {
       ]
     }`
 	builderJson = strings.TrimSpace(builderJson)
-	ioutil.WriteFile("builder.json", []byte(builderJson), 0700)
+	ioutil.WriteFile("data/builder.json", []byte(builderJson), 0700)
 }
 
 func cleanup() {
-	os.RemoveAll("builds")
-	os.Remove("builder.json")
-	os.Remove("build_results.json")
+	os.RemoveAll("data")
 }
 
 func postToHooks(path string, event string) {

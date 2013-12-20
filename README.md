@@ -10,7 +10,7 @@ Very simple CI
 
 ## Usage
 
-Setup a a builder.json file:
+Setup a ```data/builder.json``` file:
 
     {
       "AuthToken": "",

@@ -13,7 +13,7 @@ type Configuration struct {
 }
 
 func CurrentConfiguration() Configuration {
-	b, err := ioutil.ReadFile("builder.json")
+	b, err := ioutil.ReadFile("data/builder.json")
 	if err != nil {
 		panic(err)
 	}
