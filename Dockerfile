@@ -1,4 +1,4 @@
-FROM stackbrew/ubuntu:raring
+FROM ubuntu
 
 #golang
 RUN apt-get install -y --force-yes curl && \
@@ -14,3 +14,4 @@ ADD . /gopath/src/github.com/AndrewVos/builder
 WORKDIR /gopath/src/github.com/AndrewVos/builder
 RUN go get
 RUN go build
+RUN mv /gopath/src/github.com/AndrewVos/builder /builder
