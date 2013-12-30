@@ -10,20 +10,8 @@ import (
 	"time"
 )
 
-func postToHooks(path string, event string) {
-	b, _ := ioutil.ReadFile(path)
-	request, _ := http.NewRequest("POST", "/hooks/"+event, nil)
-	request.Body = ioutil.NopCloser(strings.NewReader(string(b)))
-	w := httptest.NewRecorder()
-	if event == "push" {
-		pushHandler(w, request)
-	} else if event == "pull_request" {
-		pullRequestHandler(w, request)
-	}
-}
-
 func TestCreatesHooks(t *testing.T) {
-	setup()
+	setup("")
 	defer cleanup()
 
 	var paths []string
@@ -60,7 +48,7 @@ func TestCreatesHooks(t *testing.T) {
 }
 
 func TestRedPush(t *testing.T) {
-	setup()
+	setup("red")
 	defer cleanup()
 
 	postToHooks("test-data/red_push.json", "push")
@@ -76,7 +64,7 @@ func TestRedPush(t *testing.T) {
 }
 
 func TestGreenPush(t *testing.T) {
-	setup()
+	setup("green")
 	defer cleanup()
 
 	postToHooks("test-data/green_push.json", "push")
@@ -92,7 +80,7 @@ func TestGreenPush(t *testing.T) {
 }
 
 func TestRedPullRequest(t *testing.T) {
-	setup()
+	setup("red")
 	defer cleanup()
 
 	postToHooks("test-data/red_pull_request.json", "pull_request")
@@ -108,7 +96,7 @@ func TestRedPullRequest(t *testing.T) {
 }
 
 func TestGreenPullRequest(t *testing.T) {
-	setup()
+	setup("green")
 	defer cleanup()
 
 	postToHooks("test-data/green_pull_request.json", "pull_request")
@@ -124,7 +112,7 @@ func TestGreenPullRequest(t *testing.T) {
 }
 
 func TestClosedPullRequest(t *testing.T) {
-	setup()
+	setup("green")
 	defer cleanup()
 
 	postToHooks("test-data/closed_pull_request.json", "pull_request")
@@ -135,7 +123,7 @@ func TestClosedPullRequest(t *testing.T) {
 }
 
 func TestDeleteBranch(t *testing.T) {
-	setup()
+	setup("green")
 	defer cleanup()
 
 	postToHooks("test-data/delete_branch_push.json", "push")
@@ -147,7 +135,7 @@ func TestDeleteBranch(t *testing.T) {
 
 func TestFakeSomeBuilds(t *testing.T) {
 	if os.Getenv("FAKE_BUILDS") != "" {
-		setup()
+		setup("")
 		defer cleanup()
 
 		go func() {
@@ -165,8 +153,9 @@ func TestFakeSomeBuilds(t *testing.T) {
 }
 
 func TestOutputEnvirons(t *testing.T) {
-	setup()
+	setup("environs")
 	defer cleanup()
+
 	postToHooks("test-data/output_environs_push.json", "push")
 
 	build := AllBuilds()[0]
@@ -189,7 +178,7 @@ func TestOutputEnvirons(t *testing.T) {
 }
 
 func TestExecutesHooksWithEnvirons(t *testing.T) {
-	setup()
+	setup("green")
 	defer cleanup()
 
 	hook := `
@@ -229,7 +218,7 @@ BUILDER_BUILD_SHA=7f39d6495acae9db022cc20e7f0d940158e0337d`
 }
 
 func TestStoresPullRequestInfo(t *testing.T) {
-	setup()
+	setup("green")
 	defer cleanup()
 
 	postToHooks("test-data/green_pull_request.json", "pull_request")
@@ -242,7 +231,7 @@ func TestStoresPullRequestInfo(t *testing.T) {
 }
 
 func TestStoresPushInfo(t *testing.T) {
-	setup()
+	setup("green")
 	defer cleanup()
 
 	postToHooks("test-data/green_push.json", "push")

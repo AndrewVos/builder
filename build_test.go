@@ -7,7 +7,7 @@ import (
 )
 
 func TestBuildUrl(t *testing.T) {
-	setup()
+	setup("")
 	defer cleanup()
 
 	build := NewBuild("", "", "", "", nil)
@@ -18,7 +18,7 @@ func TestBuildUrl(t *testing.T) {
 }
 
 func TestBuildUrlPort80(t *testing.T) {
-	setup()
+	setup("")
 	defer cleanup()
 
 	builderJson := `{
