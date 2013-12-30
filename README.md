@@ -40,3 +40,17 @@ A typical Builderfile looks something like this:
     make test # or some other sort of test runner thingy
 
 Go to host:port to view a list of builds
+
+## Hooks
+
+Hooks get executed whenever a build completes. To add a new hook just save a script in ```data/hooks```.
+
+These are the available environment variables:
+
+      $BUILDER_BUILD_RESULT # pass, fail or incomplete
+      $BUILDER_BUILD_URL    # the build url
+      $BUILDER_BUILD_ID     # unique build ID
+      $BUILDER_BUILD_OWNER  # username of commit owner
+      $BUILDER_BUILD_REPO   # repository name
+      $BUILDER_BUILD_REF    # branch name
+      $BUILDER_BUILD_SHA    # commit SHA
