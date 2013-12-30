@@ -198,8 +198,11 @@ func (build *Build) fail() {
 }
 
 func (build *Build) executeHooks() {
+	fmt.Println("Executing hooks")
+
 	hooks, _ := ioutil.ReadDir("data/hooks")
 	for _, file := range hooks {
+		fmt.Printf("Executing hook %q\n", file.Name())
 		cmd := exec.Command("bash", "../../../data/hooks/"+file.Name())
 		cmd.Dir = build.Path()
 
