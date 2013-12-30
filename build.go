@@ -209,7 +209,10 @@ func (build *Build) executeHooks() {
 			customEnv = append(customEnv, c)
 		}
 		cmd.Env = customEnv
-		output, _ := cmd.CombinedOutput()
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			fmt.Println(err)
+		}
 		fmt.Println(string(output))
 	}
 }
