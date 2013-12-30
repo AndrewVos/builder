@@ -13,21 +13,16 @@ import (
 )
 
 type Build struct {
-	ID       string
-	URL      string
-	Owner    string
-	Repo     string
-	Ref      string
-	SHA      string
-	Complete bool
-	Success  bool
-	Result   string
-	Commits  []Commit
-}
-
-type Commit struct {
-	SHA   string
-	Title string
+	ID        string
+	URL       string
+	Owner     string
+	Repo      string
+	Ref       string
+	SHA       string
+	Complete  bool
+	Success   bool
+	Result    string
+	GithubURL string
 }
 
 func init() {
@@ -38,14 +33,14 @@ func init() {
 	}
 }
 
-func NewBuild(owner string, repo string, ref string, sha string, commits []Commit) *Build {
+func NewBuild(owner string, repo string, ref string, sha string, githubURL string) *Build {
 	build := &Build{
-		Owner:   owner,
-		Repo:    repo,
-		Ref:     ref,
-		SHA:     sha,
-		Commits: commits,
-		Result:  "incomplete",
+		Owner:     owner,
+		Repo:      repo,
+		Ref:       ref,
+		SHA:       sha,
+		Result:    "incomplete",
+		GithubURL: githubURL,
 	}
 
 	hash := md5.New()

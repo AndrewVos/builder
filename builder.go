@@ -75,23 +75,14 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	owner, _ := push.Get("repository").Get("owner").Get("name").String()
 	name, _ := push.Get("repository").Get("name").String()
 	sha, _ := push.Get("head_commit").Get("id").String()
-
-	commits := []Commit{}
-	c, _ := push.Get("commits").Array()
-	for _, i := range c {
-		m := i.(map[string]interface{})
-		commits = append(commits, Commit{
-			SHA:   m["id"].(string),
-			Title: m["message"].(string),
-		})
-	}
+	githubURL, _ := push.Get("compare").String()
 
 	build := NewBuild(
 		owner,
 		name,
 		strings.Replace(ref, "refs/heads/", "", -1),
 		sha,
-		commits,
+		githubURL,
 	)
 	build.start()
 }
@@ -114,20 +105,14 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	fullName, _ := pullRequest.Get("repository").Get("full_name").String()
 	ref, _ := pullRequest.Get("pull_request").Get("head").Get("ref").String()
 	sha, _ := pullRequest.Get("pull_request").Get("head").Get("sha").String()
-	commitTitle, _ := pullRequest.Get("pull_request").Get("title").String()
-	commits := []Commit{
-		{
-			SHA:   sha,
-			Title: commitTitle,
-		},
-	}
+	githubURL, _ := pullRequest.Get("pull_request").Get("_links").Get("self").Get("href").String()
 
 	build := NewBuild(
 		strings.Split(fullName, "/")[0],
 		strings.Split(fullName, "/")[1],
 		ref,
 		sha,
-		commits,
+		githubURL,
 	)
 	build.start()
 }

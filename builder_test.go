@@ -224,9 +224,9 @@ func TestStoresPullRequestInfo(t *testing.T) {
 	postToHooks("test-data/green_pull_request.json", "pull_request")
 
 	build := AllBuilds()[0]
-	expectedCommit := Commit{SHA: "7f39d6495acae9db022cc20e7f0d940158e0337d", Title: "empty"}
-	if build.Commits[0] != expectedCommit {
-		t.Errorf("Expected commit:\n%v\nGot:\n%v", expectedCommit, build.Commits[0])
+	expected := "https://api.github.com/repos/AndrewVos/builder-test-green-repo/pulls/2"
+	if build.GithubURL != expected {
+		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expected, build.GithubURL)
 	}
 }
 
@@ -237,16 +237,8 @@ func TestStoresPushInfo(t *testing.T) {
 	postToHooks("test-data/green_push.json", "push")
 
 	build := AllBuilds()[0]
-	if len(build.Commits) != 2 {
-		t.Fatalf("Expected 2 commits\n")
-	}
-	expectedCommits := []Commit{
-		Commit{SHA: "92a9437adf4ac6f0114552e5149d0598fdbf0355", Title: "empty"},
-		Commit{SHA: "576be25d7e3d5320e92472d5734b50b17c1822e0", Title: "output something"},
-	}
-	for i, expectedCommit := range expectedCommits {
-		if build.Commits[i] != expectedCommit {
-			t.Errorf("Expected commit:\n%v\nGot:\n%v\n", expectedCommit, build.Commits[i])
-		}
+	expected := "https://github.com/AndrewVos/builder-test-green-repo/compare/da46166aa120...576be25d7e3d"
+	if build.GithubURL != expected {
+		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expected, build.GithubURL)
 	}
 }
