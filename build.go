@@ -21,6 +21,7 @@ type Build struct {
 	SHA      string
 	Complete bool
 	Success  bool
+	Result   string
 	Commits  []Commit
 }
 
@@ -44,6 +45,7 @@ func NewBuild(owner string, repo string, ref string, sha string, commits []Commi
 		Ref:     ref,
 		SHA:     sha,
 		Commits: commits,
+		Result:  "incomplete",
 	}
 
 	hash := md5.New()
@@ -140,13 +142,9 @@ func (build *Build) checkout(output *os.File) error {
 	return nil
 }
 
-func (build *Build) execute(output *os.File) error {
-	cmd := exec.Command("bash", "./Builderfile")
-	cmd.Dir = build.SourcePath()
-	cmd.Stdout = output
-	cmd.Stderr = output
-
-	customEnv := []string{
+func (build *Build) environs() []string {
+	return []string{
+		"BUILDER_BUILD_RESULT=" + build.Result,
 		"BUILDER_BUILD_URL=" + build.URL,
 		"BUILDER_BUILD_ID=" + build.ID,
 		"BUILDER_BUILD_OWNER=" + build.Owner,
@@ -154,6 +152,16 @@ func (build *Build) execute(output *os.File) error {
 		"BUILDER_BUILD_REF=" + build.Ref,
 		"BUILDER_BUILD_SHA=" + build.SHA,
 	}
+}
+
+func (build *Build) execute(output *os.File) error {
+	cmd := exec.Command("bash", "./Builderfile")
+	cmd.Dir = build.SourcePath()
+	cmd.Stdout = output
+	cmd.Stderr = output
+
+	customEnv := build.environs()
+
 	for _, c := range os.Environ() {
 		customEnv = append(customEnv, c)
 	}
@@ -176,13 +184,34 @@ func (build *Build) execute(output *os.File) error {
 func (build *Build) pass() {
 	build.Complete = true
 	build.Success = true
+	build.Result = "pass"
 	build.save()
+	build.executeHooks()
 }
 
 func (build *Build) fail() {
 	build.Complete = true
 	build.Success = false
+	build.Result = "fail"
 	build.save()
+	build.executeHooks()
+}
+
+func (build *Build) executeHooks() {
+	hooks, _ := ioutil.ReadDir("data/hooks")
+	for _, file := range hooks {
+		cmd := exec.Command("bash", "../../../data/hooks/"+file.Name())
+		cmd.Dir = build.Path()
+
+		customEnv := build.environs()
+
+		for _, c := range os.Environ() {
+			customEnv = append(customEnv, c)
+		}
+		cmd.Env = customEnv
+		output, _ := cmd.CombinedOutput()
+		fmt.Println(string(output))
+	}
 }
 
 func (b *Build) Path() string {

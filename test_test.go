@@ -8,6 +8,7 @@ import (
 
 func setup() {
 	os.Mkdir("data", 0700)
+	os.Mkdir("data/hooks", 0700)
 	builderJson := `{
       "AuthToken": "lolsszz",
       "Host": "http://example.org",
