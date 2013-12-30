@@ -120,21 +120,7 @@ func (build *Build) start() {
 func (build *Build) checkout(output *os.File) error {
 	url := "https://" + CurrentConfiguration().AuthToken + "@github.com/" + build.Owner + "/" + build.Repo
 
-	cmd := exec.Command("git", "clone", "--quiet", "--depth=50", "--branch", build.Ref, url, build.SourcePath())
-	cmd.Stdout = output
-	cmd.Stderr = output
-
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("git", "checkout", "--quiet", build.SHA)
-	cmd.Dir = build.SourcePath()
-	cmd.Stdout = output
-	cmd.Stderr = output
-
-	err = cmd.Run()
+	err := git.Retrieve(output, url, build.SourcePath(), build.Ref, build.SHA)
 	if err != nil {
 		return err
 	}

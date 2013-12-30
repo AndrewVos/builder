@@ -13,6 +13,7 @@ import (
 )
 
 var githubDomain string = "https://api.github.com"
+var git GitTool
 
 func main() {
 	createHooks()
@@ -20,6 +21,7 @@ func main() {
 }
 
 func init() {
+	git = Git{}
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/hooks/push", pushHandler)
 	http.HandleFunc("/hooks/pull_request", pullRequestHandler)
