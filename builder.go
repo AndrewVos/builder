@@ -147,9 +147,13 @@ func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 		if build.ID == id {
 			raw := build.ReadOutput()
 			raw = raw[start:]
+			converted := ""
+			if len(raw) != 0 {
+				converted = AnsiToHtml(raw)
+			}
 			output := map[string]interface{}{
 				"length": len(raw),
-				"output": AnsiToHtml(raw),
+				"output": converted,
 			}
 			b, _ := json.Marshal(output)
 			w.Write(b)
