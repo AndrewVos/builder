@@ -14,8 +14,10 @@ function update() {
         if (build.Commits != null && build.Commits.length > 0) {
           for (i = 0; i < build.Commits.length; i++) {
             var commit = build.Commits[i];
-            commits += ' <span class="label label-info">' + commit.SHA.slice(0,7) + '</span>';
+            commits += "<div>";
+            commits += '<span class="label label-info">' + commit.SHA.slice(0,7) + '</span>';
             commits += "<span> " + commit.Message + "</span>";
+            commits += "</div>";
           }
         }
 
