@@ -32,6 +32,7 @@ func init() {
 	serveFile("public/scripts/jquery-2.0.3.min.js")
 	serveFile("public/scripts/build.js")
 	serveFile("public/scripts/build_output.js")
+	serveFile("public/styles/common.css")
 	serveFile("public/styles/build.css")
 	serveFile("public/styles/build_output.css")
 	serveFile("public/styles/bootstrap.min.css")
