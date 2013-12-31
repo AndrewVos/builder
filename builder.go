@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bitly/go-simplejson"
 	"github.com/hoisie/mustache"
-	"github.com/likexian/simplejson"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -60,7 +60,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 func pushHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
-	push, err := simplejson.Loads(string(body))
+	push, err := simplejson.NewJson(body)
 	if err != nil {
 		fmt.Println("Error parsing push")
 		fmt.Println(err)
@@ -78,12 +78,25 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	sha, _ := push.Get("head_commit").Get("id").String()
 	githubURL, _ := push.Get("compare").String()
 
+	jsonCommits, err := push.Get("commits").Array()
+	var commits []Commit
+	for _, c := range jsonCommits {
+		m := c.(map[string]interface{})
+		commit := Commit{
+			SHA:     m["id"].(string),
+			Message: m["message"].(string),
+			URL:     m["url"].(string),
+		}
+		commits = append(commits, commit)
+	}
+
 	build := NewBuild(
 		owner,
 		name,
 		strings.Replace(ref, "refs/heads/", "", -1),
 		sha,
 		githubURL,
+		commits,
 	)
 	build.start()
 }
@@ -91,7 +104,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
-	pullRequest, err := simplejson.Loads(string(body))
+	pullRequest, err := simplejson.NewJson(body)
 	if err != nil {
 		fmt.Println("Error parsing pull request")
 		fmt.Println(err)
@@ -114,6 +127,7 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 		ref,
 		sha,
 		githubURL,
+		nil,
 	)
 	build.start()
 }

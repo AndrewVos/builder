@@ -9,6 +9,16 @@ function update() {
       var container = $("#builds");
 
       if ($("#"+build.ID).length == 0) {
+        var commits = "";
+
+        if (build.Commits != null && build.Commits.length > 0) {
+          for (i = 0; i < build.Commits.length; i++) {
+            var commit = build.Commits[i];
+            commits += ' <span class="label label-info">' + commit.SHA.slice(0,7) + '</span>';
+            commits += "<span> " + commit.Message + "</span>";
+          }
+        }
+
         var html = "<div id='"+build.ID+"' class='build'>" +
           "<div class='icon'></div>" +
           "<h2>" +
@@ -17,6 +27,7 @@ function update() {
             "</a>" +
           "</h2>" +
             "<a href='" + build.GithubURL + "'>View on Github</a>" +
+            commits +
         "</div>";
 
         container.prepend($(html));

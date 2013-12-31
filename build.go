@@ -23,6 +23,13 @@ type Build struct {
 	Success   bool
 	Result    string
 	GithubURL string
+	Commits   []Commit
+}
+
+type Commit struct {
+	SHA     string
+	Message string
+	URL     string
 }
 
 func init() {
@@ -33,7 +40,7 @@ func init() {
 	}
 }
 
-func NewBuild(owner string, repo string, ref string, sha string, githubURL string) *Build {
+func NewBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) *Build {
 	build := &Build{
 		Owner:     owner,
 		Repo:      repo,
@@ -41,6 +48,7 @@ func NewBuild(owner string, repo string, ref string, sha string, githubURL strin
 		SHA:       sha,
 		Result:    "incomplete",
 		GithubURL: githubURL,
+		Commits:   commits,
 	}
 
 	hash := md5.New()
