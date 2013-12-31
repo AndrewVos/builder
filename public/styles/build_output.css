@@ -1,6 +1,7 @@
 pre {
   background-color: transparent;
   border: 0;
+  padding: 0;
 }
 
 .line {
@@ -10,10 +11,6 @@ pre {
 .line.focused, .line:hover {
   cursor: pointer;
   background-color: #D4F4DF;
-}
-
-#output {
-  padding-top: 10px;
 }
 
 .line a {

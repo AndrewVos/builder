@@ -9,18 +9,17 @@ function update() {
       var container = $("#builds");
 
       if ($("#"+build.ID).length == 0) {
-        var buildLine = $("<div id='"+build.ID+"' class='build'></div>");
-        var title = $("<h1>"+ build.Repo + "/" + build.Ref + "</h1>");
-        var icon = $("<div class='icon'></div>");
-        var link = $("<a href='/build_output?id="+ build.ID + "'>output</a>");
-        var view = $("<a href='"+ build.GithubURL + "'>View on Github</a>");
-        var commits = $("<ul></ul>");
+        var html = "<div id='"+build.ID+"' class='build'>" +
+          "<div class='icon'></div>" +
+          "<h2>" +
+            "<a href='/build_output?id=" + build.ID + "'>" +
+              build.Repo + "/" + build.Ref +
+            "</a>" +
+          "</h2>" +
+            "<a href='" + build.GithubURL + "'>View on Github</a>" +
+        "</div>";
 
-        buildLine.append(icon);
-        buildLine.append(title);
-        buildLine.append(link);
-        buildLine.append(view);
-        container.prepend(buildLine)
+        container.prepend($(html));
       }
       var buildLine = $("#" + build.ID);
       if (build.Complete == true) {

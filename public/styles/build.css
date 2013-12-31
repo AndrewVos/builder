@@ -1,9 +1,18 @@
 /* http://www.colourlovers.com/palette/114395/Kinda_Basic */
 
+h2 a {
+  color: #333;
+}
+
+.build {
+  height: 70px
+}
+
 .build .icon {
   float: left;
   width: 40px;
-  height: 40px;
+  height: 100%;
+  margin-right: 15px;
 }
 
 .build.red .icon {
