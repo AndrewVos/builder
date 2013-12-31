@@ -4,25 +4,49 @@ h2 a {
   color: #333;
 }
 
-.build {
-  height: 70px
+.ball-container {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
 }
 
-.build .icon {
-  float: left;
-  width: 40px;
-  height: 100%;
-  margin-right: 15px;
+.build .ball {
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  position: relative;
 }
 
-.build.red .icon {
+.build.red .ball {
   background-color: #EC2655;
 }
 
-.build.green .icon {
+.build.green .ball {
   background-color: #B7EB34;
 }
 
-.build.blue .icon {
+.build.blue .ball {
   background-color: #4AC5EB;
+  -webkit-animation-name: pulse;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-duration: 1s;
+}
+
+@-webkit-keyframes pulse {
+  from, to  {
+    -webkit-animation-timing-function: ease-out;
+  }
+  50% {
+    width: 10px;
+    height: 10px;
+    top: 5px;
+    left: 5px;
+    -webkit-animation-timing-function: ease-in;
+  }
+  0% {
+    width: 20px;
+    height: 20px;
+    -webkit-animation-timing-function: ease-in;
+  }
 }

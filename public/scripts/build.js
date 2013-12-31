@@ -20,14 +20,14 @@ function update() {
         }
 
         var html = "<div id='"+build.ID+"' class='build'>" +
-          "<div class='icon'></div>" +
           "<h2>" +
+            "<div class='ball-container'><div class='ball'></div></div>" +
             "<a href='/build_output?id=" + build.ID + "'>" +
               build.Repo + "/" + build.Ref +
             "</a>" +
           "</h2>" +
-            "<a href='" + build.GithubURL + "'>View on Github</a>" +
             commits +
+            "<div><a href='" + build.GithubURL + "'>View on Github</a></div>" +
         "</div>";
 
         container.prepend($(html));
