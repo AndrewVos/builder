@@ -4,15 +4,16 @@ pre {
   padding: 0;
 }
 
-.line .black   { color: black }
-.line .red     { color: red }
-.line .green   { color: green }
-.line .yellow  { color: yellow }
-.line .blue    { color: blue }
+.line          { color: #4d4d4c }
+.line .black   { color: #4d4d4c }
+.line .red     { color: #c82829 }
+.line .green   { color: #718c00 }
+.line .yellow  { color: #eab700 }
+.line .blue    { color: #4271ae }
 .line .magenta { color: magenta }
 .line .cyan    { color: cyan }
-.line .white   { color: white }
-.line .grey    { color: grey }
+.line .white   { color: #ffffff }
+.line .grey    { color: #969896 }
 
 .line {
   line-height: 1.5em;
@@ -54,8 +55,8 @@ pre {
   content: '';
 }
 .scroller_line.red {
-  background-color: red;
+  background-color: #c82829;
 }
 .scroller_line.green {
-  background-color: green;
+  background-color: #718c00;
 }
