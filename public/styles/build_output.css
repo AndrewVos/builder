@@ -36,6 +36,9 @@ pre {
 }
 
 .scroller {
+  position: fixed;
+  top: 0;
+  left: 0;
   height: 100%;
   width: 20px;
   display: table;
@@ -50,10 +53,9 @@ pre {
 .scroller_line > span:after {
   content: '';
 }
-.scroller.red {
+.scroller_line.red {
   background-color: red;
 }
-
-.scroller.red {
+.scroller_line.green {
   background-color: green;
 }
