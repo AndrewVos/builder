@@ -29,7 +29,7 @@ func AnsiToHtml(ansi string) string {
 		}
 		for code, name := range ansiColours {
 			if strings.Contains(match, strconv.Itoa(code)) {
-				return `<span style="color: ` + name + `;">`
+				return `<span class="` + name + `">`
 			}
 		}
 		return match

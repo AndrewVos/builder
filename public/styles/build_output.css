@@ -4,6 +4,16 @@ pre {
   padding: 0;
 }
 
+.line .black   { color: black }
+.line .red     { color: red }
+.line .green   { color: green }
+.line .yellow  { color: yellow }
+.line .blue    { color: blue }
+.line .magenta { color: magenta }
+.line .cyan    { color: cyan }
+.line .white   { color: white }
+.line .grey    { color: grey }
+
 .line {
   line-height: 1.5em;
 }
@@ -23,4 +33,27 @@ pre {
   line-height: 1.5em;
   text-align: center;
   color: lightgrey;
+}
+
+.scroller {
+  height: 100%;
+  width: 20px;
+  display: table;
+  border: 0;
+}
+.scroller_line {
+  display: table-row;
+}
+.scroller_line > span {
+  display: table-cell;
+}
+.scroller_line > span:after {
+  content: '';
+}
+.scroller.red {
+  background-color: red;
+}
+
+.scroller.red {
+  background-color: green;
 }

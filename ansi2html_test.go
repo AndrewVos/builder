@@ -8,7 +8,7 @@ import (
 
 func testConvertsColour(t *testing.T, code int, name string) {
 	ansi := "\x1b[" + strconv.Itoa(code) + `m` + `heloo ansi` + "\x1b[0m"
-	expectedHtml := `<span style="color: ` + name + `;">heloo ansi</span>`
+	expectedHtml := `<span class="` + name + `">heloo ansi</span>`
 	if strings.Contains(AnsiToHtml(ansi), expectedHtml) == false {
 		t.Errorf("\nExpected:\n%v\nActual:\n%v\n", expectedHtml, AnsiToHtml(ansi))
 	}

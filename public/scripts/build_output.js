@@ -41,7 +41,22 @@ function update() {
           window.scrollTo(0, document.body.scrollHeight);
         }
       }
+      updateScroller();
     }
     setTimeout(update, 1000);
+  });
+}
+
+function updateScroller() {
+  $("span.red,span.green").each(function() {
+    var span = $(this);
+    if (span.hasClass("added-to-scroller") == false) {
+      span.addClass("added-to-scroller");
+      var colour = "green";
+      if (span.hasClass("red")) {
+        colour = "red";
+      }
+      scroller.append($("<div class='scroller_line " + colour + "'><span></span></div>"));
+    }
   });
 }
