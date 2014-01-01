@@ -48,6 +48,7 @@ function update() {
 }
 
 function updateScroller() {
+  var scroller = $(".scroller");
   $("span.red,span.green").each(function() {
     var span = $(this);
     if (span.hasClass("added-to-scroller") == false) {
