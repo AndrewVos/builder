@@ -34,7 +34,6 @@ function update() {
       if (window.scrolledToHash == false && location.hash != "") {
         window.scrolledToHash = true;
         index = location.hash.replace("#line", "");
-        console.log(index);
         element = $(".line").get(index);
         selectLine($(element));
       } else {
