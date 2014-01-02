@@ -59,10 +59,3 @@ pre {
 .scroller_line.green {
   background-color: green;
 }
-
-.scroll-region {
-  position: relative;
-  width: 100%;
-  height: 40px;
-  border: 1px solid black;
-}
