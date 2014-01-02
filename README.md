@@ -39,6 +39,8 @@ Go to host:port to view a list of builds
 
 ## Hooks
 
+NOTE: HOOKS ARE TEMPORARILY DEPRECATED
+
 Hooks get executed whenever a build completes. To add a new hook just save a script in ```data/hooks```.
 
 These are the available environment variables:
