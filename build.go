@@ -95,18 +95,22 @@ func (build *Build) save() {
 
 func (build *Build) start() {
 	build.save()
+
 	err := os.MkdirAll(build.Path(), 0700)
 	if err != nil {
-		fmt.Println(err)
 		build.fail()
 		return
 	}
-	output, _ := os.Create(build.LogPath())
+
+	output, err := os.Create(build.LogPath())
+	if err != nil {
+		build.fail()
+		return
+	}
 	defer output.Close()
 
 	err = build.checkout(output)
 	if err != nil {
-		fmt.Println(err)
 		build.fail()
 		return
 	}
@@ -124,6 +128,7 @@ func (build *Build) checkout(output *os.File) error {
 
 	err := git.Retrieve(output, url, build.SourcePath(), build.Ref, build.SHA)
 	if err != nil {
+		fmt.Fprintln(output, err)
 		return err
 	}
 
