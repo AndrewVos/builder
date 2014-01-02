@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/bitly/go-simplejson"
@@ -28,6 +29,8 @@ func init() {
 	http.HandleFunc("/builds", buildsHandler)
 	http.HandleFunc("/build_output", buildOutputHandler)
 	http.HandleFunc("/build_output_raw", buildOutputRawHandler)
+	http.HandleFunc("/github_callback", githubCallbackHandler)
+	http.HandleFunc("/logout", logoutHandler)
 
 	serveFile("public/scripts/jquery-2.0.3.min.js")
 	serveFile("public/scripts/build.js")
@@ -52,8 +55,22 @@ func serveFile(filename string) {
 	})
 }
 
+func authenticated(r *http.Request) bool {
+	_, err := r.Cookie("github_access_token")
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	body := mustache.RenderFile("views/home.mustache")
+	loggedIn := authenticated(r)
+
+	context := map[string]interface{}{
+		"clientID": os.Getenv("GITHUB_CLIENT_ID"),
+		"loggedIn": loggedIn,
+	}
+	body := mustache.RenderFile("views/home.mustache", context)
 	w.Write([]byte(body))
 }
 
@@ -166,6 +183,39 @@ func buildOutputHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	body := mustache.RenderFile("views/build_output.mustache", map[string]string{"build_id": id})
 	w.Write([]byte(body))
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{Name: "github_access_token", Value: "empty", MaxAge: -1})
+	http.Redirect(w, r, "/", 302)
+}
+
+func githubCallbackHandler(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+
+	body, _ := json.Marshal(map[string]interface{}{
+		"client_id":     os.Getenv("GITHUB_CLIENT_ID"),
+		"client_secret": os.Getenv("GITHUB_CLIENT_SECRET"),
+		"code":          code,
+	})
+
+	client := &http.Client{}
+	request, _ := http.NewRequest("POST", "https://github.com/login/oauth/access_token", bytes.NewReader(body))
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer response.Body.Close()
+	body, _ = ioutil.ReadAll(response.Body)
+	var accessTokenResponse map[string]string
+	json.Unmarshal(body, &accessTokenResponse)
+	http.SetCookie(w, &http.Cookie{Name: "github_access_token", Value: accessTokenResponse["access_token"]})
+	http.Redirect(w, r, "/", 302)
 }
 
 func createHooks() {

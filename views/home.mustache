@@ -12,6 +12,14 @@
   <body>
     <div class="container">
       <h1><a href="/">builder</a></h1>
+
+      {{#loggedIn}}
+        <a href="/logout">Logout</a>
+      {{/loggedIn}}
+      {{^loggedIn}}
+        <a href="https://github.com/login/oauth/authorize?client_id={{clientID}}">Login with Github</a>
+      {{/loggedIn}}
+
       <div id="builds">
       </div>
     </div>
