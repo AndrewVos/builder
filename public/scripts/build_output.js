@@ -49,15 +49,15 @@ function update() {
 
 function updateScroller() {
   var scroller = $(".scroller");
-  $("span.red,span.green").each(function() {
-    var span = $(this);
-    if (span.hasClass("added-to-scroller") == false) {
-      span.addClass("added-to-scroller");
-      var colour = "green";
-      if (span.hasClass("red")) {
-        colour = "red";
+  $("#output .line").each(function() {
+    var line = $(this);
+    if (line.hasClass("added-to-scroller") == false) {
+      line.addClass("added-to-scroller");
+      if (line.find("span.red").length > 0) {
+        scroller.append($("<div class='scroller_line red'><span></span></div>"));
+      } else {
+        scroller.append($("<div class='scroller_line'><span></span></div>"));
       }
-      scroller.append($("<div class='scroller_line " + colour + "'><span></span></div>"));
     }
   });
 }
