@@ -47,6 +47,18 @@ function update() {
   });
 }
 
+$(window).scroll(function() {
+  drawScrollRegion()
+});
+
+function drawScrollRegion() {
+  var percentageDifference = $(window).height() / $(document).height();
+  var top = $(window).scrollTop() * percentageDifference;
+  var height = $(window).height() * percentageDifference;
+  $(".scroll-region").css("top", height + "px");
+  $(".scroll-region").css("height", height + "px");
+}
+
 function updateScroller() {
   var scroller = $(".scroller");
   $("#output .line").each(function() {
@@ -64,4 +76,5 @@ function updateScroller() {
       }
     }
   });
+  drawScrollRegion();
 }
