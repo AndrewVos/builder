@@ -3,12 +3,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/bitly/go-simplejson"
 	"github.com/hoisie/mustache"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -30,6 +30,7 @@ func init() {
 	http.HandleFunc("/build_output_raw", buildOutputRawHandler)
 	http.HandleFunc("/github_callback", githubCallbackHandler)
 	http.HandleFunc("/logout", logoutHandler)
+	http.HandleFunc("/add_repository", addRepositoryHandler)
 
 	serveFile("public/scripts/jquery-2.0.3.min.js")
 	serveFile("public/scripts/build.js")
@@ -54,16 +55,16 @@ func serveFile(filename string) {
 	})
 }
 
-func authenticated(r *http.Request) bool {
-	_, err := r.Cookie("github_access_token")
+func authenticated(r *http.Request) (*http.Cookie, bool) {
+	cookie, err := r.Cookie("github_access_token")
 	if err != nil {
-		return false
+		return nil, false
 	}
-	return true
+	return cookie, true
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	loggedIn := authenticated(r)
+	_, loggedIn := authenticated(r)
 
 	context := map[string]interface{}{
 		"clientID": configuration.GithubClientID,
@@ -189,6 +190,20 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", 302)
 }
 
+func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, loggedIn := authenticated(r)
+	if loggedIn {
+		err := addGithubBuild(
+			cookie.Value,
+			r.PostFormValue("owner"),
+			r.PostFormValue("repository"),
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
 func githubCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 
@@ -217,7 +232,7 @@ func githubCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", 302)
 }
 
-func createHooks(accessToken string, owner string, repo string) {
+func createHooks(accessToken string, owner string, repo string) error {
 	url := githubDomain + "/repos/" + owner + "/" + repo + "/hooks?access_token=" + accessToken
 
 	supportedEvents := []string{"push", "pull_request"}
@@ -236,12 +251,12 @@ func createHooks(accessToken string, owner string, repo string) {
 		request, _ := http.NewRequest("POST", url, strings.NewReader(body))
 		response, err := client.Do(request)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
+
 		if response.StatusCode == 401 {
-			fmt.Println("Auth Token appears to be invalid")
-			os.Exit(1)
+			return errors.New("Access Token appears to be invalid")
 		}
 	}
+	return nil
 }

@@ -21,8 +21,13 @@ func TestCreatesHooks(t *testing.T) {
 		b, _ := ioutil.ReadAll(r.Body)
 		bodies = append(bodies, string(b))
 	}))
-	defer ts.Close()
+	oldDomain := githubDomain
 	githubDomain = ts.URL
+
+	defer func() {
+		githubDomain = oldDomain
+		ts.Close()
+	}()
 
 	supportedEvents := []string{"push", "pull_request"}
 	createHooks("lolsszz", "AndrewVos", "builder")

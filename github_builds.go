@@ -17,6 +17,20 @@ func findGithubBuild(owner string, name string) (GithubBuild, bool) {
 	return GithubBuild{}, false
 }
 
+func addGithubBuild(accessToken string, owner string, repo string) error {
+	err := createHooks(accessToken, owner, repo)
+	if err != nil {
+		return err
+	}
+
+	githubBuilds = append(githubBuilds, GithubBuild{
+		AccessToken:     accessToken,
+		RepositoryOwner: owner,
+		RepositoryName:  repo,
+	})
+	return nil
+}
+
 func init() {
 	githubBuilds = []GithubBuild{}
 }
