@@ -113,7 +113,6 @@ func (build *Build) start() {
 
 	err = build.execute(output)
 	if err != nil {
-		fmt.Println(err)
 		build.fail()
 		return
 	}
