@@ -14,10 +14,10 @@ Very simple CI
 
 Set the following environment variables:
 
-		GITHUB_CLIENT_ID
-		GITHUB_CLIENT_SECRET
-		HOST
-		PORT
+		GITHUB_CLIENT_ID=
+		GITHUB_CLIENT_SECRET=
+		HOST=
+		PORT=
 
 Host will be the static IP or hostname of the server that builder is running on.
 
