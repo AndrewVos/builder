@@ -54,7 +54,11 @@ function updateScroller() {
     if (line.hasClass("added-to-scroller") == false) {
       line.addClass("added-to-scroller");
       if (line.find("span.red").length > 0) {
-        scroller.append($("<div class='scroller_line red'><span></span></div>"));
+        red = $("<div class='scroller_line red'><span></span></div>");
+        red.click(function() {
+          selectLine(line);
+        });
+        scroller.append(red);
       } else {
         scroller.append($("<div class='scroller_line'><span></span></div>"));
       }
