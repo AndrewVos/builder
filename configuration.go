@@ -1,32 +1,30 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"os"
 )
 
 type Configuration struct {
-	AuthToken    string
-	Host         string
-	Port         string
-	Repositories []Repository
+	GithubClientID     string
+	GithubClientSecret string
+	Host               string
+	Port               string
 }
 
-func CurrentConfiguration() Configuration {
-	b, err := ioutil.ReadFile("data/builder.json")
-	if err != nil {
-		panic(err)
+var configuration Configuration
+
+func init() {
+	configuration = Configuration{
+		GithubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
+		GithubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
+		Host:               os.Getenv("HOST"),
+		Port:               os.Getenv("PORT"),
 	}
 
-	var c Configuration
-	err = json.Unmarshal(b, &c)
-	if err != nil {
-		panic(err)
+	if configuration.Host == "" {
+		configuration.Host = "http://localhost"
 	}
-	return c
-}
-
-type Repository struct {
-	Owner      string
-	Repository string
+	if configuration.Port == "" {
+		configuration.Port = "1212"
+	}
 }

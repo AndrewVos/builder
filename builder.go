@@ -17,7 +17,6 @@ var githubDomain string = "https://api.github.com"
 var git GitTool
 
 func main() {
-	createHooks()
 	serve()
 }
 
@@ -42,7 +41,7 @@ func init() {
 }
 
 func serve() {
-	err := http.ListenAndServe(":"+CurrentConfiguration().Port, nil)
+	err := http.ListenAndServe(":"+configuration.Port, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +66,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	loggedIn := authenticated(r)
 
 	context := map[string]interface{}{
-		"clientID": os.Getenv("GITHUB_CLIENT_ID"),
+		"clientID": configuration.GithubClientID,
 		"loggedIn": loggedIn,
 	}
 	body := mustache.RenderFile("views/home.mustache", context)
@@ -194,8 +193,8 @@ func githubCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 
 	body, _ := json.Marshal(map[string]interface{}{
-		"client_id":     os.Getenv("GITHUB_CLIENT_ID"),
-		"client_secret": os.Getenv("GITHUB_CLIENT_SECRET"),
+		"client_id":     configuration.GithubClientID,
+		"client_secret": configuration.GithubClientSecret,
 		"code":          code,
 	})
 
@@ -218,33 +217,31 @@ func githubCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", 302)
 }
 
-func createHooks() {
-	for _, repo := range CurrentConfiguration().Repositories {
-		url := githubDomain + "/repos/" + repo.Owner + "/" + repo.Repository + "/hooks?access_token=" + CurrentConfiguration().AuthToken
+func createHooks(accessToken string, owner string, repo string) {
+	url := githubDomain + "/repos/" + owner + "/" + repo + "/hooks?access_token=" + accessToken
 
-		supportedEvents := []string{"push", "pull_request"}
-		for _, event := range supportedEvents {
-			body := `{
+	supportedEvents := []string{"push", "pull_request"}
+	for _, event := range supportedEvents {
+		body := `{
       "name": "web",
       "active": true,
       "events": [ "` + event + `" ],
       "config": {
-        "url": "` + CurrentConfiguration().Host + ":" + CurrentConfiguration().Port + `/hooks/` + event + `",
+        "url": "` + configuration.Host + ":" + configuration.Port + `/hooks/` + event + `",
         "content_type": "json"
       }
     }`
 
-			client := &http.Client{}
-			request, _ := http.NewRequest("POST", url, strings.NewReader(body))
-			response, err := client.Do(request)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			if response.StatusCode == 401 {
-				fmt.Println("Auth Token appears to be invalid")
-				os.Exit(1)
-			}
+		client := &http.Client{}
+		request, _ := http.NewRequest("POST", url, strings.NewReader(body))
+		response, err := client.Do(request)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if response.StatusCode == 401 {
+			fmt.Println("Auth Token appears to be invalid")
+			os.Exit(1)
 		}
 	}
 }

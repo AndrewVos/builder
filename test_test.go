@@ -38,19 +38,14 @@ func postToHooks(path string, event string) {
 func setup(fakeRepo string) {
 	os.Mkdir("data", 0700)
 	os.Mkdir("data/hooks", 0700)
-	builderJson := `{
-      "AuthToken": "lolsszz",
-      "Host": "http://example.org",
-      "Port": "1212",
-      "Repositories": [
-        {"Owner": "AndrewVos", "Repository": "builder"}
-      ]
-    }`
-	builderJson = strings.TrimSpace(builderJson)
-	ioutil.WriteFile("data/builder.json", []byte(builderJson), 0700)
 
 	if fakeRepo != "" {
 		git = FakeGit{FakeRepo: fakeRepo}
+	}
+
+	githubBuilds = []GithubBuild{
+		GithubBuild{AccessToken: "hello", RepositoryOwner: "AndrewVos", RepositoryName: "builder-test-green-repo"},
+		GithubBuild{AccessToken: "hello", RepositoryOwner: "AndrewVos", RepositoryName: "builder-test-red-repo"},
 	}
 }
 

@@ -25,7 +25,7 @@ func TestCreatesHooks(t *testing.T) {
 	githubDomain = ts.URL
 
 	supportedEvents := []string{"push", "pull_request"}
-	createHooks()
+	createHooks("lolsszz", "AndrewVos", "builder")
 
 	for i, event := range supportedEvents {
 		expectedPath := "/repos/AndrewVos/builder/hooks?access_token=lolsszz"
@@ -37,7 +37,7 @@ func TestCreatesHooks(t *testing.T) {
       "active": true,
       "events": [ "` + event + `" ],
       "config": {
-        "url": "http://example.org:1212/hooks/` + event + `",
+        "url": "http://localhost:1212/hooks/` + event + `",
         "content_type": "json"
       }
     }`
@@ -204,7 +204,7 @@ func TestExecutesHooksWithEnvirons(t *testing.T) {
 	dir, _ := os.Getwd()
 	expected := dir + `/data/builds/` + build.ID + `
 BUILDER_BUILD_RESULT=pass
-BUILDER_BUILD_URL=http://example.org:1212/build_output?id=` + build.ID + `
+BUILDER_BUILD_URL=http://localhost:1212/build_output?id=` + build.ID + `
 BUILDER_BUILD_ID=` + build.ID + `
 BUILDER_BUILD_OWNER=AndrewVos
 BUILDER_BUILD_REPO=builder-test-green-repo

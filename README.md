@@ -12,16 +12,12 @@ Very simple CI
 
 [Get a Github Auth Token](https://help.github.com/articles/creating-an-access-token-for-command-line-use)
 
-Setup a ```data/builder.json``` file:
+Set the following environment variables:
 
-    {
-      "AuthToken": "",
-      "Host": "",
-      "Port": "",
-      "Repositories": [
-        {"Owner": "", "Repository": ""}
-      ]
-    }
+		GITHUB_CLIENT_ID
+		GITHUB_CLIENT_SECRET
+		HOST
+		PORT
 
 Host will be the static IP or hostname of the server that builder is running on.
 

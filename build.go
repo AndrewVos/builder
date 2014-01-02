@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/kr/pty"
 	"io"
@@ -56,9 +57,9 @@ func NewBuild(owner string, repo string, ref string, sha string, githubURL strin
 	io.WriteString(hash, build.SHA)
 	build.ID = fmt.Sprintf("%v-%x", time.Now().Unix(), hash.Sum(nil))
 
-	build.URL = CurrentConfiguration().Host
-	if CurrentConfiguration().Port != "80" {
-		build.URL += ":" + CurrentConfiguration().Port
+	build.URL = configuration.Host
+	if configuration.Port != "80" {
+		build.URL += ":" + configuration.Port
 	}
 	build.URL += "/build_output?id=" + build.ID
 
@@ -124,7 +125,11 @@ func (build *Build) start() {
 }
 
 func (build *Build) checkout(output *os.File) error {
-	url := "https://" + CurrentConfiguration().AuthToken + "@github.com/" + build.Owner + "/" + build.Repo
+	githubBuild, found := findGithubBuild(build.Owner, build.Repo)
+	if !found {
+		return errors.New("Don't have access to build this project")
+	}
+	url := "https://" + githubBuild.AccessToken + "@github.com/" + build.Owner + "/" + build.Repo
 
 	err := git.Retrieve(output, url, build.SourcePath(), build.Ref, build.SHA)
 	if err != nil {
