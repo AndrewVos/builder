@@ -55,7 +55,7 @@ function drawScrollRegion() {
   var percentageDifference = $(window).height() / $(document).height();
   var top = $(window).scrollTop() * percentageDifference;
   var height = $(window).height() * percentageDifference;
-  $(".scroll-region").css("top", height + "px");
+  $(".scroll-region").css("top", top + "px");
   $(".scroll-region").css("height", height + "px");
 }
 
