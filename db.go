@@ -9,7 +9,7 @@ var connection *jet.Db
 
 func connect() (*jet.Db, error) {
 	if connection == nil {
-		c, err := jet.Open("postgres", "user=builder password="+configuration.PostgresPassword()+" dbname=builder sslmode=disable")
+		c, err := jet.Open("postgres", "host=/var/run/postgresql dbname=builder sslmode=disable")
 		connection = c
 		return connection, err
 	}

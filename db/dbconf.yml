@@ -1,3 +1,3 @@
 development:
   driver: postgres
-  open: user=builder dbname=builder password=test sslmode=disable
+  open: dbname=builder host=/var/run/postgresql sslmode=disable
