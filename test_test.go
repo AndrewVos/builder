@@ -43,8 +43,8 @@ func setup(fakeRepo string) {
 		git = FakeGit{FakeRepo: fakeRepo}
 	}
 
-	GithubBuild{AccessToken: "hello", RepositoryOwner: "AndrewVos", RepositoryName: "builder-test-green-repo"}.Save()
-	GithubBuild{AccessToken: "hello", RepositoryOwner: "AndrewVos", RepositoryName: "builder-test-red-repo"}.Save()
+	GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-green-repo"}.Save()
+	GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-red-repo"}.Save()
 }
 
 func cleanup() {

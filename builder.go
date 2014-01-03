@@ -193,13 +193,24 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, loggedIn := authenticated(r)
 	if loggedIn {
-		err := addGithubBuild(
-			cookie.Value,
-			r.PostFormValue("owner"),
-			r.PostFormValue("repository"),
-		)
+		ghb := GithubBuild{
+			AccessToken: cookie.Value,
+			Owner:       r.PostFormValue("owner"),
+			Repository:  r.PostFormValue("repository"),
+		}
+
+		err := createHooks(ghb.AccessToken, ghb.Owner, ghb.Repository)
 		if err != nil {
 			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+
+		err = ghb.Save()
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
 		}
 	}
 }

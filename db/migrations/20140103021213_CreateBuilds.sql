@@ -1,9 +1,4 @@
-CREATE TABLE github_builds(
-  access_token VARCHAR(100) NOT NULL,
-  owner VARCHAR(100) NOT NULL,
-  repository VARCHAR(100) NOT NULL
-);
-
+-- +goose Up
 CREATE TABLE builds(
   build_id   VARCHAR(100) PRIMARY KEY,
   url        VARCHAR(200),
@@ -17,9 +12,6 @@ CREATE TABLE builds(
   github_url VARCHAR(200)
 );
 
-CREATE TABLE commits(
-  build_id VARCHAR(100),
-  sha      VARCHAR(50),
-  message  TEXT,
-  url      VARCHAR(200)
-);
+-- +goose Down
+DROP TABLE builds;
+

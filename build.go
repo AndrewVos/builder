@@ -125,7 +125,7 @@ func (build *Build) start() {
 }
 
 func (build *Build) checkout(output *os.File) error {
-	githubBuild, found := findGithubBuild(build.Owner, build.Repo)
+	githubBuild, found := FindGithubBuild(build.Owner, build.Repo)
 	if !found {
 		return errors.New("Don't have access to build this project")
 	}
