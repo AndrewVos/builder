@@ -2,7 +2,7 @@
 
 if [ "$1" == "build" ]; then
   service postgresql start
-  sudo -u postgres createdb -O builder builder
+  su postgres createdb builder
   go get bitbucket.org/liamstask/goose/cmd/goose
   goose up
   go test
