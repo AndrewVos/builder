@@ -2,6 +2,7 @@
 
 if [ "$1" == "build" ]; then
   service postgresql start
+  createuser -d -s -r -e root
   createdb builder
   go get bitbucket.org/liamstask/goose/cmd/goose
   goose up
