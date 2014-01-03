@@ -1,7 +1,14 @@
 #!/bin/bash -x
 
-docker build -t AndrewVos/builder .
-docker run -i \
-                   -v `pwd`:/gopath/src/github.com/AndrewVos/builder \
-                   AndrewVos/builder service postgresql start && su postgres -c "createuser -d -s -r -e root" && go get bitbucket.org/liamstask/goose/cmd/goose && goose up && go test
+if [ "$1" == "build" ]; then
+  service postgresql start
+  sudo -u postgres createdb -O builder builder
+  go get bitbucket.org/liamstask/goose/cmd/goose
+  goose up
+  go test
+else
+  docker build -t AndrewVos/builder .
+  docker run -i -v `pwd`:/gopath/src/github.com/AndrewVos/builder \
+                     AndrewVos/builder ./Builderfile build
+fi
 
