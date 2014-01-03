@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM stackbrew/ubuntu:raring
 
 #golang
 RUN apt-get install -y --force-yes curl && \
