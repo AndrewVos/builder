@@ -3,4 +3,5 @@
 docker build -t AndrewVos/builder .
 docker run -i \
                    -v `pwd`:/gopath/src/github.com/AndrewVos/builder \
-                   AndrewVos/builder go test
+                   AndrewVos/builder service postgresql start && su postgres -c "createuser -d -s -r -e root" && go test
+
