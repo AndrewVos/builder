@@ -9,6 +9,7 @@ type Configuration struct {
 	GithubClientSecret string
 	Host               string
 	Port               string
+	PostgresPassword   string
 }
 
 var configuration Configuration
@@ -26,5 +27,8 @@ func init() {
 	}
 	if configuration.Port == "" {
 		configuration.Port = "1212"
+	}
+	if configuration.PostgresPassword == "" {
+		configuration.PostgresPassword = "test"
 	}
 }

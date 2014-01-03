@@ -1,0 +1,3 @@
+sudo -u postgres createuser -s builder
+sudo -u postgres createdb -O builder builder
+sudo -u postgres psql builder -c "ALTER USER builder PASSWORD 'test';"

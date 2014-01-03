@@ -1,5 +1,11 @@
 package main
 
+import (
+	"database/sql"
+	_ "github.com/lib/pq"
+	"log"
+)
+
 type GithubBuild struct {
 	AccessToken     string
 	RepositoryName  string
@@ -8,29 +14,76 @@ type GithubBuild struct {
 
 var githubBuilds []GithubBuild
 
-func findGithubBuild(owner string, name string) (GithubBuild, bool) {
-	for _, build := range githubBuilds {
-		if build.RepositoryOwner == owner && build.RepositoryName == name {
-			return build, true
-		}
+var connection *sql.DB
+
+func connect() (*sql.DB, error) {
+	if connection == nil {
+		connection, err := sql.Open("postgres", "user=builder password="+configuration.PostgresPassword+" dbname=builder sslmode=disable")
+		return connection, err
 	}
-	return GithubBuild{}, false
+	err := connection.Ping()
+	if err != nil {
+		return nil, err
+	}
+	return connection, nil
 }
 
-func addGithubBuild(accessToken string, owner string, repo string) error {
-	err := createHooks(accessToken, owner, repo)
+func findGithubBuild(owner string, repository string) (GithubBuild, bool) {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return GithubBuild{}, false
+	}
+
+	rows, err := db.Query(`
+    SELECT (access_token) FROM github_builds
+      WHERE   owner      = $1
+      AND     repository = $2
+  `, owner, repository)
+
+	if err != nil {
+		return GithubBuild{}, false
+	}
+
+	rows.Next()
+	var accessToken string
+	err = rows.Scan(&accessToken)
+	if err != nil {
+		return GithubBuild{}, false
+	}
+	return GithubBuild{AccessToken: accessToken, RepositoryOwner: owner, RepositoryName: repository}, true
+}
+
+func (ghb GithubBuild) Save() error {
+	db, err := connect()
 	if err != nil {
 		return err
 	}
 
-	githubBuilds = append(githubBuilds, GithubBuild{
-		AccessToken:     accessToken,
-		RepositoryOwner: owner,
-		RepositoryName:  repo,
-	})
+	_, err = db.Query(`INSERT INTO github_builds(access_token, owner, repository)
+    VALUES($1, $2, $3)`, ghb.AccessToken, ghb.RepositoryOwner, ghb.RepositoryName)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func init() {
-	githubBuilds = []GithubBuild{}
+func addGithubBuild(accessToken string, owner string, repo string) error {
+	err := createHooks(accessToken, owner, repo)
+
+	ghb := GithubBuild{
+		AccessToken:     accessToken,
+		RepositoryOwner: owner,
+		RepositoryName:  repo,
+	}
+
+	err = ghb.Save()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
