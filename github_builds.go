@@ -5,9 +5,10 @@ import (
 )
 
 type GithubBuild struct {
-	AccessToken string `db:"access_token"`
-	Owner       string `db:"owner"`
-	Repository  string `db:"repository"`
+	Id          int
+	AccessToken string
+	Owner       string
+	Repository  string
 }
 
 func FindGithubBuild(owner string, repository string) (GithubBuild, bool) {

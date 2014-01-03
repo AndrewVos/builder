@@ -9,7 +9,13 @@ type Configuration struct {
 	GithubClientSecret string
 	Host               string
 	Port               string
-	PostgresPassword   string
+}
+
+func (c Configuration) PostgresPassword() string {
+	if pass := os.Getenv("PG_PASSWORD"); pass != "" {
+		return pass
+	}
+	return "test"
 }
 
 var configuration Configuration
@@ -27,8 +33,5 @@ func init() {
 	}
 	if configuration.Port == "" {
 		configuration.Port = "1212"
-	}
-	if configuration.PostgresPassword == "" {
-		configuration.PostgresPassword = "test"
 	}
 }

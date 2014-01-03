@@ -49,7 +49,9 @@ func setup(fakeRepo string) {
 
 func cleanup() {
 	db, _ := connect()
-	db.Exec("DELETE FROM github_builds")
+	db.Query("DELETE FROM github_builds").Run()
+	db.Query("DELETE FROM builds").Run()
+	db.Query("DELETE FROM commits").Run()
 	os.RemoveAll("data")
 	git = Git{}
 }

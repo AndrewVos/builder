@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/kr/pty"
@@ -10,27 +8,50 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"time"
+	"strconv"
 )
 
 type Build struct {
-	ID        string
-	URL       string
-	Owner     string
-	Repo      string
-	Ref       string
-	SHA       string
-	Complete  bool
-	Success   bool
-	Result    string
-	GithubURL string
-	Commits   []Commit
+	Id            int
+	GithubBuildId int
+	Url           string
+	Owner         string
+	Repository    string
+	Ref           string
+	Sha           string
+	Complete      bool
+	Success       bool
+	Result        string
+	GithubUrl     string
+	Commits       []Commit
 }
 
 type Commit struct {
-	SHA     string
+	Id      int
+	BuildId int
+	Sha     string
 	Message string
-	URL     string
+	Url     string
+}
+
+func (commit *Commit) Save() error {
+	db, err := connect()
+	if err != nil {
+		return err
+	}
+
+	err = db.Query(`
+    INSERT INTO commits (build_id, sha, message, url)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `, commit.BuildId, commit.Sha, commit.Message, commit.Url,
+	).Rows(&commit)
+
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
 }
 
 func init() {
@@ -41,62 +62,108 @@ func init() {
 	}
 }
 
-func NewBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) *Build {
-	build := &Build{
-		Owner:     owner,
-		Repo:      repo,
-		Ref:       ref,
-		SHA:       sha,
-		Result:    "incomplete",
-		GithubURL: githubURL,
-		Commits:   commits,
+func (build *Build) ReadCommits() error {
+	var commits []Commit
+
+	db, err := connect()
+	if err != nil {
+		return err
 	}
 
-	hash := md5.New()
-	io.WriteString(hash, build.Ref)
-	io.WriteString(hash, build.SHA)
-	build.ID = fmt.Sprintf("%v-%x", time.Now().Unix(), hash.Sum(nil))
-
-	build.URL = configuration.Host
-	if configuration.Port != "80" {
-		build.URL += ":" + configuration.Port
+	err = db.Query("SELECT * FROM commits WHERE build_id = $1", build.Id).Rows(&commits)
+	if err != nil {
+		fmt.Println("Error getting commits:", err)
+		return err
 	}
-	build.URL += "/build_output?id=" + build.ID
 
-	return build
+	build.Commits = commits
+	return nil
 }
 
-func BuildResultsPath() string {
-	return "data/build_results.json"
+func CreateBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) (*Build, error) {
+	db, err := connect()
+	if err != nil {
+		return nil, err
+	}
+
+	githubBuild, exists := FindGithubBuild(owner, repo)
+	if !exists {
+		return nil, errors.New(fmt.Sprintf("Someone tried to do a build but we don't have an access token :/\n%v/%v", owner, repo))
+	}
+
+	var m []int
+	err = db.Query(`
+    INSERT INTO builds (github_build_id)
+      VALUES ($1)
+      RETURNING (id)
+    `, githubBuild.Id,
+	).Rows(&m)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	build_id := m[0]
+
+	build := &Build{
+		Id:         build_id,
+		Owner:      owner,
+		Repository: repo,
+		Ref:        ref,
+		Sha:        sha,
+		Result:     "incomplete",
+		GithubUrl:  githubURL,
+		Commits:    commits,
+	}
+
+	build.Url = configuration.Host
+	if configuration.Port != "80" {
+		build.Url += ":" + configuration.Port
+	}
+	build.Url += "/build_output?id=" + strconv.Itoa(build.Id)
+
+	build.save()
+
+	for _, commit := range commits {
+		commit.BuildId = build.Id
+		commit.Save()
+	}
+
+	return build, nil
 }
 
 func (build *Build) save() {
-	allBuilds := AllBuilds()
-	added := false
-
-	for i, b := range allBuilds {
-		if b.ID == build.ID {
-			allBuilds[i] = build
-			added = true
-		}
-	}
-	if !added {
-		allBuilds = append(allBuilds, build)
-	}
-
-	marshalled, err := json.Marshal(allBuilds)
+	db, err := connect()
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
-	err = ioutil.WriteFile(BuildResultsPath(), marshalled, 0700)
+
+	err = db.Query(`
+    UPDATE builds
+      SET
+        (url, owner, repository, ref, sha, complete, success, result, github_url) = ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      WHERE id = $10
+	`,
+		build.Url,
+		build.Owner,
+		build.Repository,
+		build.Ref,
+		build.Sha,
+		build.Complete,
+		build.Success,
+		build.Result,
+		build.GithubUrl,
+		build.Id,
+	).Run()
+
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error saving build:", err)
+		return
 	}
 }
 
 func (build *Build) start() {
-	build.save()
-
 	err := os.MkdirAll(build.Path(), 0700)
 	if err != nil {
 		build.fail()
@@ -125,13 +192,13 @@ func (build *Build) start() {
 }
 
 func (build *Build) checkout(output *os.File) error {
-	githubBuild, found := FindGithubBuild(build.Owner, build.Repo)
+	githubBuild, found := FindGithubBuild(build.Owner, build.Repository)
 	if !found {
 		return errors.New("Don't have access to build this project")
 	}
-	url := "https://" + githubBuild.AccessToken + "@github.com/" + build.Owner + "/" + build.Repo
+	url := "https://" + githubBuild.AccessToken + "@github.com/" + build.Owner + "/" + build.Repository
 
-	err := git.Retrieve(output, url, build.SourcePath(), build.Ref, build.SHA)
+	err := git.Retrieve(output, url, build.SourcePath(), build.Ref, build.Sha)
 	if err != nil {
 		fmt.Fprintln(output, err)
 		return err
@@ -143,12 +210,12 @@ func (build *Build) checkout(output *os.File) error {
 func (build *Build) environs() []string {
 	return []string{
 		"BUILDER_BUILD_RESULT=" + build.Result,
-		"BUILDER_BUILD_URL=" + build.URL,
-		"BUILDER_BUILD_ID=" + build.ID,
+		"BUILDER_BUILD_URL=" + build.Url,
+		"BUILDER_BUILD_ID=" + strconv.Itoa(build.Id),
 		"BUILDER_BUILD_OWNER=" + build.Owner,
-		"BUILDER_BUILD_REPO=" + build.Repo,
+		"BUILDER_BUILD_REPO=" + build.Repository,
 		"BUILDER_BUILD_REF=" + build.Ref,
-		"BUILDER_BUILD_SHA=" + build.SHA,
+		"BUILDER_BUILD_SHA=" + build.Sha,
 	}
 }
 
@@ -216,7 +283,7 @@ func (build *Build) executeHooks() {
 }
 
 func (b *Build) Path() string {
-	return "data/builds/" + b.ID
+	return "data/builds/" + strconv.Itoa(b.Id)
 }
 
 func (b *Build) LogPath() string {
@@ -235,21 +302,19 @@ func (build *Build) ReadOutput() string {
 	return string(b)
 }
 
-func FindBuildById(id string) *Build {
-	for _, build := range AllBuilds() {
-		if build.ID == id {
-			return build
-		}
-	}
-	return nil
-}
-
 func AllBuilds() []*Build {
-	b, err := ioutil.ReadFile(BuildResultsPath())
+	db, err := connect()
 	if err != nil {
-		return []*Build{}
+		fmt.Println(err)
+		return nil
 	}
-	var allBuilds []*Build
-	err = json.Unmarshal(b, &allBuilds)
-	return allBuilds
+
+	var builds []*Build
+	err = db.Query("SELECT * FROM builds").Rows(&builds)
+	if err != nil {
+		fmt.Println("Error getting all builds:", err)
+		return nil
+	}
+
+	return builds
 }

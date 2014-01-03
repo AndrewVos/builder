@@ -100,14 +100,14 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	for _, c := range jsonCommits {
 		m := c.(map[string]interface{})
 		commit := Commit{
-			SHA:     m["id"].(string),
+			Sha:     m["id"].(string),
 			Message: m["message"].(string),
-			URL:     m["url"].(string),
+			Url:     m["url"].(string),
 		}
 		commits = append(commits, commit)
 	}
 
-	build := NewBuild(
+	build, err := CreateBuild(
 		owner,
 		name,
 		strings.Replace(ref, "refs/heads/", "", -1),
@@ -115,6 +115,10 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		githubURL,
 		commits,
 	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	build.start()
 }
 
@@ -138,7 +142,7 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	sha, _ := pullRequest.Get("pull_request").Get("head").Get("sha").String()
 	githubURL, _ := pullRequest.Get("pull_request").Get("_links").Get("self").Get("href").String()
 
-	build := NewBuild(
+	build, err := CreateBuild(
 		strings.Split(fullName, "/")[0],
 		strings.Split(fullName, "/")[1],
 		ref,
@@ -146,6 +150,10 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 		githubURL,
 		nil,
 	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	build.start()
 }
 
@@ -158,10 +166,10 @@ func buildsHandler(w http.ResponseWriter, r *http.Request) {
 func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	id := r.URL.Query().Get("id")
+	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	start, _ := strconv.Atoi(r.URL.Query().Get("start"))
 	for _, build := range AllBuilds() {
-		if build.ID == id {
+		if build.Id == id {
 			raw := build.ReadOutput()
 			raw = raw[start:]
 			converted := ""

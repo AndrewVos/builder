@@ -1,6 +1,7 @@
 -- +goose Up
 CREATE TABLE commits(
-  build_id VARCHAR(100),
+  id       SERIAL PRIMARY KEY,
+  build_id SERIAL,
   sha      VARCHAR(50),
   message  TEXT,
   url      VARCHAR(200)

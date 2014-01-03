@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -166,12 +167,12 @@ func TestOutputEnvirons(t *testing.T) {
 	build := AllBuilds()[0]
 
 	expectedLines := []string{
-		"BUILDER_BUILD_URL=" + build.URL,
-		"BUILDER_BUILD_ID=" + build.ID,
+		"BUILDER_BUILD_URL=" + build.Url,
+		"BUILDER_BUILD_ID=" + strconv.Itoa(build.Id),
 		"BUILDER_BUILD_OWNER=" + build.Owner,
-		"BUILDER_BUILD_REPO=" + build.Repo,
+		"BUILDER_BUILD_REPO=" + build.Repository,
 		"BUILDER_BUILD_REF=" + build.Ref,
-		"BUILDER_BUILD_SHA=" + build.SHA,
+		"BUILDER_BUILD_SHA=" + build.Sha,
 	}
 	actual := build.ReadOutput()
 
@@ -204,13 +205,13 @@ func TestExecutesHooksWithEnvirons(t *testing.T) {
 	postToHooks("test-data/green_pull_request.json", "pull_request")
 
 	build := AllBuilds()[0]
-	outputFile := "data/builds/" + build.ID + "/hook-output"
+	outputFile := "data/builds/" + strconv.Itoa(build.Id) + "/hook-output"
 	b, _ := ioutil.ReadFile(outputFile)
 	dir, _ := os.Getwd()
-	expected := dir + `/data/builds/` + build.ID + `
+	expected := dir + `/data/builds/` + strconv.Itoa(build.Id) + `
 BUILDER_BUILD_RESULT=pass
-BUILDER_BUILD_URL=http://localhost:1212/build_output?id=` + build.ID + `
-BUILDER_BUILD_ID=` + build.ID + `
+BUILDER_BUILD_URL=http://localhost:1212/build_output?id=` + strconv.Itoa(build.Id) + `
+BUILDER_BUILD_ID=` + strconv.Itoa(build.Id) + `
 BUILDER_BUILD_OWNER=AndrewVos
 BUILDER_BUILD_REPO=builder-test-green-repo
 BUILDER_BUILD_REF=pool-request
@@ -230,8 +231,8 @@ func TestStoresPullRequestInfo(t *testing.T) {
 
 	build := AllBuilds()[0]
 	expected := "https://api.github.com/repos/AndrewVos/builder-test-green-repo/pulls/2"
-	if build.GithubURL != expected {
-		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expected, build.GithubURL)
+	if build.GithubUrl != expected {
+		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expected, build.GithubUrl)
 	}
 }
 
@@ -244,22 +245,30 @@ func TestStoresPushInfo(t *testing.T) {
 	build := AllBuilds()[0]
 
 	commits := []Commit{
-		Commit{SHA: "92a9437adf4ac6f0114552e5149d0598fdbf0355", Message: "empty", URL: "https://github.com/AndrewVos/builder-test-green-repo/commit/92a9437adf4ac6f0114552e5149d0598fdbf0355"},
-		Commit{SHA: "576be25d7e3d5320e92472d5734b50b17c1822e0", Message: "output something", URL: "https://github.com/AndrewVos/builder-test-green-repo/commit/576be25d7e3d5320e92472d5734b50b17c1822e0"},
+		Commit{Sha: "92a9437adf4ac6f0114552e5149d0598fdbf0355", Message: "empty", Url: "https://github.com/AndrewVos/builder-test-green-repo/commit/92a9437adf4ac6f0114552e5149d0598fdbf0355"},
+		Commit{Sha: "576be25d7e3d5320e92472d5734b50b17c1822e0", Message: "output something", Url: "https://github.com/AndrewVos/builder-test-green-repo/commit/576be25d7e3d5320e92472d5734b50b17c1822e0"},
 	}
 
+	build.ReadCommits()
+
 	if len(build.Commits) != 2 {
-		t.Fatalf("Expected two commits")
+		t.Fatalf("Expected two commits, but got %d\n", len(build.Commits))
 	}
 
 	for i, expectedCommit := range commits {
-		if build.Commits[i] != expectedCommit {
-			t.Errorf("Expected commit:\n%vGot:\n%v\n", expectedCommit, build.Commits[i])
+		if build.Commits[i].Sha != expectedCommit.Sha {
+			t.Errorf("Expected commit to have Sha:\n%vGot:\n%v\n", expectedCommit.Sha, build.Commits[i].Sha)
+		}
+		if build.Commits[i].Message != expectedCommit.Message {
+			t.Errorf("Expected commit to have Message:\n%vGot:\n%v\n", expectedCommit.Message, build.Commits[i].Message)
+		}
+		if build.Commits[i].Url != expectedCommit.Url {
+			t.Errorf("Expected commit to have Url:\n%vGot:\n%v\n", expectedCommit.Url, build.Commits[i].Url)
 		}
 	}
 
-	expectedGithubURL := "https://github.com/AndrewVos/builder-test-green-repo/compare/da46166aa120...576be25d7e3d"
-	if build.GithubURL != expectedGithubURL {
-		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expectedGithubURL, build.GithubURL)
+	expectedGithubUrl := "https://github.com/AndrewVos/builder-test-green-repo/compare/da46166aa120...576be25d7e3d"
+	if build.GithubUrl != expectedGithubUrl {
+		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expectedGithubUrl, build.GithubUrl)
 	}
 }
