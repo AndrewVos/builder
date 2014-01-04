@@ -6,6 +6,7 @@ if [ "$1" == "build" ]; then
   su postgres -c "createdb builder"
   go get bitbucket.org/liamstask/goose/cmd/goose
   goose up
+  go get -u
   go test
 else
   docker build -t AndrewVos/builder .
