@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"testing"
 )
 
@@ -22,6 +23,15 @@ func (fbl *FakeBuildLauncher) LaunchBuild(owner string, repo string, ref string,
 		"githubURL": githubURL,
 	}
 	fbl.commits = commits
+	return nil
+}
+
+type FakeGithubBuildPersister struct {
+	GithubBuild *GithubBuild
+}
+
+func (f *FakeGithubBuildPersister) Save(ghb *GithubBuild) error {
+	f.GithubBuild = ghb
 	return nil
 }
 
@@ -88,4 +98,46 @@ func TestPullRequestHandlerLaunchesBuildWithCorrectValues(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
+	setup("")
+	defer cleanup()
+
+	oldBuildPersister := githubBuildPersister
+	fakePersister := &FakeGithubBuildPersister{}
+	githubBuildPersister = fakePersister
+	defer func() { githubBuildPersister = oldBuildPersister }()
+
+	formValues := url.Values{}
+	formValues.Set("owner", "RepoOwnerrr")
+	formValues.Set("repository", "RailsTurboLinks")
+
+	r, _ := http.NewRequest("", "", nil)
+	r.PostForm = formValues
+	r.AddCookie(&http.Cookie{Name: "github_access_token", Value: "somethingsomething"})
+	addRepositoryHandler(nil, r)
+	fakeGit := git.(*FakeGit)
+
+	expectedValues := map[string]interface{}{
+		"accessToken": "somethingsomething",
+		"owner":       "RepoOwnerrr",
+		"repository":  "RailsTurboLinks",
+	}
+
+	for field, expectedValue := range expectedValues {
+		if actual := fakeGit.createHooksParameters[field]; actual != expectedValue {
+			t.Errorf("Expected create hook parameter %q to be %q, but was %q\n", field, expectedValue, actual)
+		}
+	}
+
+	if fakePersister.GithubBuild.AccessToken != expectedValues["accessToken"] {
+		t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fakePersister.GithubBuild.AccessToken)
+	}
+	if fakePersister.GithubBuild.Owner != expectedValues["owner"] {
+		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakePersister.GithubBuild.AccessToken)
+	}
+	if fakePersister.GithubBuild.Repository != expectedValues["repository"] {
+		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakePersister.GithubBuild.AccessToken)
+	}
 }

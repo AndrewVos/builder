@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 )
@@ -54,33 +53,4 @@ func authenticated(r *http.Request) (*http.Cookie, bool) {
 		return nil, false
 	}
 	return cookie, true
-}
-
-func createHooks(accessToken string, owner string, repo string) error {
-	url := githubDomain + "/repos/" + owner + "/" + repo + "/hooks?access_token=" + accessToken
-
-	supportedEvents := []string{"push", "pull_request"}
-	for _, event := range supportedEvents {
-		body := `{
-      "name": "web",
-      "active": true,
-      "events": [ "` + event + `" ],
-      "config": {
-        "url": "` + configuration.Host + ":" + configuration.Port + `/hooks/` + event + `",
-        "content_type": "json"
-      }
-    }`
-
-		client := &http.Client{}
-		request, _ := http.NewRequest("POST", url, strings.NewReader(body))
-		response, err := client.Do(request)
-		if err != nil {
-			return err
-		}
-
-		if response.StatusCode == 401 {
-			return errors.New("Access Token appears to be invalid")
-		}
-	}
-	return nil
 }

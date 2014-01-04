@@ -4,6 +4,31 @@ import (
 	"log"
 )
 
+type GithubBuildPersister interface {
+	Save(ghb *GithubBuild) error
+}
+
+type GithubBuildPostgresPersister struct{}
+
+func (p *GithubBuildPostgresPersister) Save(ghb *GithubBuild) error {
+	db, err := connect()
+	if err != nil {
+		return err
+	}
+
+	err = db.Query(`
+    INSERT INTO github_builds (access_token, owner, repository)
+      VALUES ($1, $2, $3)
+    `, ghb.AccessToken, ghb.Owner, ghb.Repository).Run()
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
 type GithubBuild struct {
 	Id          int
 	AccessToken string
@@ -31,23 +56,4 @@ func FindGithubBuild(owner string, repository string) (GithubBuild, bool) {
 	}
 
 	return builds[0], true
-}
-
-func (ghb GithubBuild) Save() error {
-	db, err := connect()
-	if err != nil {
-		return err
-	}
-
-	err = db.Query(`
-    INSERT INTO github_builds (access_token, owner, repository)
-      VALUES ($1, $2, $3)
-    `, ghb.AccessToken, ghb.Owner, ghb.Repository).Run()
-
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	return nil
 }

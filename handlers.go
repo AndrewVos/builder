@@ -13,9 +13,11 @@ import (
 )
 
 var launcher BuildLauncher
+var githubBuildPersister GithubBuildPersister
 
 func init() {
 	launcher = &Builder{}
+	githubBuildPersister = &GithubBuildPostgresPersister{}
 }
 
 type BuildLauncher interface {
@@ -177,20 +179,22 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, loggedIn := authenticated(r)
 	if loggedIn {
-		ghb := GithubBuild{
-			AccessToken: cookie.Value,
-			Owner:       r.PostFormValue("owner"),
-			Repository:  r.PostFormValue("repository"),
-		}
+		accessToken := cookie.Value
+		owner := r.PostFormValue("owner")
+		repository := r.PostFormValue("repository")
 
-		err := createHooks(ghb.AccessToken, ghb.Owner, ghb.Repository)
+		err := git.CreateHooks(accessToken, owner, repository)
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(500)
 			return
 		}
 
-		err = ghb.Save()
+		err = githubBuildPersister.Save(&GithubBuild{
+			AccessToken: accessToken,
+			Owner:       owner,
+			Repository:  repository,
+		})
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(500)

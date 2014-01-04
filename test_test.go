@@ -10,19 +10,25 @@ import (
 )
 
 type FakeGit struct {
-	FakeRepo string
+	FakeRepo              string
+	createHooksParameters map[string]interface{}
 }
 
-func init() {
-	git = FakeGit{FakeRepo: ""}
-}
-
-func (git FakeGit) Retrieve(log io.Writer, url string, path string, branch string, sha string) error {
-	files, _ := ioutil.ReadDir("test-repos/" + git.FakeRepo)
+func (g *FakeGit) Retrieve(log io.Writer, url string, path string, branch string, sha string) error {
+	files, _ := ioutil.ReadDir("test-repos/" + g.FakeRepo)
 	os.MkdirAll(path, 0700)
 	for _, file := range files {
-		b, _ := ioutil.ReadFile("test-repos/" + git.FakeRepo + "/" + file.Name())
+		b, _ := ioutil.ReadFile("test-repos/" + g.FakeRepo + "/" + file.Name())
 		ioutil.WriteFile(path+"/"+file.Name(), b, 0700)
+	}
+	return nil
+}
+
+func (g *FakeGit) CreateHooks(accessToken string, owner string, repo string) error {
+	g.createHooksParameters = map[string]interface{}{
+		"accessToken": accessToken,
+		"owner":       owner,
+		"repository":  repo,
 	}
 	return nil
 }
@@ -44,11 +50,12 @@ func setup(fakeRepo string) {
 	os.Mkdir("data/hooks", 0700)
 
 	if fakeRepo != "" {
-		git = FakeGit{FakeRepo: fakeRepo}
+		git = &FakeGit{FakeRepo: fakeRepo}
 	}
 
-	GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-green-repo"}.Save()
-	GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-red-repo"}.Save()
+	persister := &GithubBuildPostgresPersister{}
+	persister.Save(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-green-repo"})
+	persister.Save(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-red-repo"})
 }
 
 func cleanup() {
