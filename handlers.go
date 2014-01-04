@@ -12,13 +12,8 @@ import (
 	"strings"
 )
 
-var launcher BuildLauncher
-var database Database
-
-func init() {
-	launcher = &Builder{}
-	database = &PostgresDatabase{}
-}
+var launcher BuildLauncher = &Builder{}
+var database Database = &PostgresDatabase{}
 
 type BuildLauncher interface {
 	LaunchBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) error
@@ -28,7 +23,7 @@ type Builder struct {
 }
 
 func (builder *Builder) LaunchBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) error {
-	build, err := CreateBuild(
+	build, err := database.CreateBuild(
 		owner,
 		repo,
 		ref,
@@ -137,7 +132,7 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 func buildsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	b, _ := json.Marshal(AllBuilds())
+	b, _ := json.Marshal(database.AllBuilds())
 	w.Write(b)
 }
 
@@ -152,7 +147,7 @@ func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	start, _ := strconv.Atoi(r.URL.Query().Get("start"))
-	for _, build := range AllBuilds() {
+	for _, build := range database.AllBuilds() {
 		if build.Id == id {
 			raw := build.ReadOutput()
 			raw = raw[start:]

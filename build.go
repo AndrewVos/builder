@@ -35,7 +35,7 @@ type Commit struct {
 }
 
 func init() {
-	for _, build := range AllBuilds() {
+	for _, build := range database.AllBuilds() {
 		if build.Complete == false {
 			build.fail()
 		}
@@ -58,58 +58,6 @@ func (build *Build) ReadCommits() error {
 
 	build.Commits = commits
 	return nil
-}
-
-func CreateBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) (*Build, error) {
-	db, err := connect()
-	if err != nil {
-		return nil, err
-	}
-
-	githubBuild, exists := FindGithubBuild(owner, repo)
-	if !exists {
-		return nil, errors.New(fmt.Sprintf("Someone tried to do a build but we don't have an access token :/\n%v/%v", owner, repo))
-	}
-
-	var m []int
-	err = db.Query(`
-    INSERT INTO builds (github_build_id)
-      VALUES ($1)
-      RETURNING (id)
-    `, githubBuild.Id,
-	).Rows(&m)
-
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	build_id := m[0]
-
-	build := &Build{
-		Id:         build_id,
-		Owner:      owner,
-		Repository: repo,
-		Ref:        ref,
-		Sha:        sha,
-		Result:     "incomplete",
-		GithubUrl:  githubURL,
-		Commits:    commits,
-	}
-
-	build.Url = configuration.Host
-	if configuration.Port != "80" {
-		build.Url += ":" + configuration.Port
-	}
-	build.Url += "/build_output?id=" + strconv.Itoa(build.Id)
-
-	database.SaveBuild(build)
-
-	for _, commit := range commits {
-		commit.BuildId = build.Id
-		database.SaveCommit(&commit)
-	}
-
-	return build, nil
 }
 
 func (build *Build) start() {
@@ -249,28 +197,4 @@ func (build *Build) ReadOutput() string {
 		fmt.Println(err)
 	}
 	return string(b)
-}
-
-func AllBuilds() []*Build {
-	db, err := connect()
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	var builds []*Build
-	err = db.Query("SELECT * FROM builds").Rows(&builds)
-	if err != nil {
-		fmt.Println("Error getting all builds: ", err)
-		return nil
-	}
-
-	for _, build := range builds {
-		err := build.ReadCommits()
-		if err != nil {
-			fmt.Println("Error retrieving commits for build: ", err)
-		}
-	}
-
-	return builds
 }

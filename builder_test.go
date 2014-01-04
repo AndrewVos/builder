@@ -15,7 +15,7 @@ func TestRedPush(t *testing.T) {
 
 	postToHooks("test-data/red_push.json", "push")
 
-	build := AllBuilds()[0]
+	build := database.AllBuilds()[0]
 	if build.Success {
 		t.Errorf("Build should have failed!")
 	}
@@ -31,7 +31,7 @@ func TestGreenPush(t *testing.T) {
 
 	postToHooks("test-data/green_push.json", "push")
 
-	build := AllBuilds()[0]
+	build := database.AllBuilds()[0]
 	if build.Success == false {
 		t.Errorf("Build should have succeeded!")
 	}
@@ -47,7 +47,7 @@ func TestRedPullRequest(t *testing.T) {
 
 	postToHooks("test-data/red_pull_request.json", "pull_request")
 
-	build := AllBuilds()[0]
+	build := database.AllBuilds()[0]
 	if build.Success {
 		t.Errorf("Build should have failed!")
 	}
@@ -63,7 +63,7 @@ func TestGreenPullRequest(t *testing.T) {
 
 	postToHooks("test-data/green_pull_request.json", "pull_request")
 
-	build := AllBuilds()[0]
+	build := database.AllBuilds()[0]
 	if build.Success == false {
 		t.Errorf("Build should have succeeded!")
 	}
@@ -79,7 +79,7 @@ func TestClosedPullRequest(t *testing.T) {
 
 	postToHooks("test-data/closed_pull_request.json", "pull_request")
 
-	if len(AllBuilds()) > 0 {
+	if len(database.AllBuilds()) > 0 {
 		t.Errorf("Erm, probably shouldn't build a closed pull request")
 	}
 }
@@ -90,7 +90,7 @@ func TestDeleteBranch(t *testing.T) {
 
 	postToHooks("test-data/delete_branch_push.json", "push")
 
-	if len(AllBuilds()) > 0 {
+	if len(database.AllBuilds()) > 0 {
 		t.Errorf("Erm, probably shouldn't build a delete branch push")
 	}
 }
@@ -120,7 +120,7 @@ func TestOutputEnvirons(t *testing.T) {
 
 	postToHooks("test-data/output_environs_push.json", "push")
 
-	build := AllBuilds()[0]
+	build := database.AllBuilds()[0]
 
 	expectedLines := []string{
 		"BUILDER_BUILD_URL=" + build.Url,
@@ -160,7 +160,7 @@ func TestExecutesHooksWithEnvirons(t *testing.T) {
 	ioutil.WriteFile("data/hooks/test-hook", []byte(hook), 0700)
 	postToHooks("test-data/green_pull_request.json", "pull_request")
 
-	build := AllBuilds()[0]
+	build := database.AllBuilds()[0]
 	outputFile := "data/builds/" + strconv.Itoa(build.Id) + "/hook-output"
 	b, _ := ioutil.ReadFile(outputFile)
 	dir, _ := os.Getwd()
@@ -185,7 +185,7 @@ func TestStoresPullRequestInfo(t *testing.T) {
 
 	postToHooks("test-data/green_pull_request.json", "pull_request")
 
-	build := AllBuilds()[0]
+	build := database.AllBuilds()[0]
 	expected := "https://api.github.com/repos/AndrewVos/builder-test-green-repo/pulls/2"
 	if build.GithubUrl != expected {
 		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expected, build.GithubUrl)
@@ -198,7 +198,7 @@ func TestStoresPushInfo(t *testing.T) {
 
 	postToHooks("test-data/green_push.json", "push")
 
-	build := AllBuilds()[0]
+	build := database.AllBuilds()[0]
 
 	commits := []Commit{
 		Commit{Sha: "92a9437adf4ac6f0114552e5149d0598fdbf0355", Message: "empty", Url: "https://github.com/AndrewVos/builder-test-green-repo/commit/92a9437adf4ac6f0114552e5149d0598fdbf0355"},

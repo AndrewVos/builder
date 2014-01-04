@@ -42,6 +42,14 @@ func (f *FakeDatabase) SaveBuild(build *Build) error {
 	return nil
 }
 
+func (f *FakeDatabase) AllBuilds() []*Build {
+	return nil
+}
+
+func (f *FakeDatabase) CreateBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) (*Build, error) {
+	return nil, nil
+}
+
 func createFakeRequest(bodyPath string) *http.Request {
 	b, _ := ioutil.ReadFile(bodyPath)
 	reader := bytes.NewReader(b)
