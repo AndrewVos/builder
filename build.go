@@ -312,8 +312,15 @@ func AllBuilds() []*Build {
 	var builds []*Build
 	err = db.Query("SELECT * FROM builds").Rows(&builds)
 	if err != nil {
-		fmt.Println("Error getting all builds:", err)
+		fmt.Println("Error getting all builds: ", err)
 		return nil
+	}
+
+	for _, build := range builds {
+		err := build.ReadCommits()
+		if err != nil {
+			fmt.Println("Error retrieving commits for build: ", err)
+		}
 	}
 
 	return builds
