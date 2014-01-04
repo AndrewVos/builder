@@ -12,6 +12,36 @@ import (
 	"strings"
 )
 
+var launcher BuildLauncher
+
+func init() {
+	launcher = &Builder{}
+}
+
+type BuildLauncher interface {
+	LaunchBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) error
+}
+
+type Builder struct {
+}
+
+func (builder *Builder) LaunchBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) error {
+	build, err := CreateBuild(
+		owner,
+		repo,
+		ref,
+		sha,
+		githubURL,
+		commits,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	build.start()
+	return nil
+}
+
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	_, loggedIn := authenticated(r)
 
@@ -56,7 +86,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		commits = append(commits, commit)
 	}
 
-	build, err := CreateBuild(
+	err = launcher.LaunchBuild(
 		owner,
 		name,
 		strings.Replace(ref, "refs/heads/", "", -1),
@@ -66,9 +96,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
-	build.start()
 }
 
 func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
