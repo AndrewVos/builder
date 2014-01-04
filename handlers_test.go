@@ -38,6 +38,10 @@ func (f *FakeDatabase) SaveCommit(commit *Commit) error {
 	return nil
 }
 
+func (f *FakeDatabase) SaveBuild(build *Build) error {
+	return nil
+}
+
 func createFakeRequest(bodyPath string) *http.Request {
 	b, _ := ioutil.ReadFile(bodyPath)
 	reader := bytes.NewReader(b)

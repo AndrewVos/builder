@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/eaigner/jet"
 	_ "github.com/lib/pq"
 	"log"
@@ -24,6 +25,7 @@ func connect() (*jet.Db, error) {
 type Database interface {
 	SaveGithubBuild(ghb *GithubBuild) error
 	SaveCommit(commit *Commit) error
+	SaveBuild(build *Build) error
 }
 
 type PostgresDatabase struct {
@@ -65,4 +67,34 @@ func (p *PostgresDatabase) SaveCommit(commit *Commit) error {
 		return err
 	}
 	return nil
+}
+
+func (p *PostgresDatabase) SaveBuild(build *Build) error {
+	db, err := connect()
+	if err != nil {
+		return err
+	}
+
+	err = db.Query(`
+    UPDATE builds
+      SET
+        (url, owner, repository, ref, sha, complete, success, result, github_url) = ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      WHERE id = $10
+	`,
+		build.Url,
+		build.Owner,
+		build.Repository,
+		build.Ref,
+		build.Sha,
+		build.Complete,
+		build.Success,
+		build.Result,
+		build.GithubUrl,
+		build.Id,
+	).Run()
+
+	if err != nil {
+		fmt.Printf("Error saving build:\n%v\nError:\n%v\n", err)
+	}
+	return err
 }

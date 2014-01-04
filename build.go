@@ -102,7 +102,7 @@ func CreateBuild(owner string, repo string, ref string, sha string, githubURL st
 	}
 	build.Url += "/build_output?id=" + strconv.Itoa(build.Id)
 
-	build.save()
+	database.SaveBuild(build)
 
 	for _, commit := range commits {
 		commit.BuildId = build.Id
@@ -110,37 +110,6 @@ func CreateBuild(owner string, repo string, ref string, sha string, githubURL st
 	}
 
 	return build, nil
-}
-
-func (build *Build) save() {
-	db, err := connect()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	err = db.Query(`
-    UPDATE builds
-      SET
-        (url, owner, repository, ref, sha, complete, success, result, github_url) = ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      WHERE id = $10
-	`,
-		build.Url,
-		build.Owner,
-		build.Repository,
-		build.Ref,
-		build.Sha,
-		build.Complete,
-		build.Success,
-		build.Result,
-		build.GithubUrl,
-		build.Id,
-	).Run()
-
-	if err != nil {
-		fmt.Println("Error saving build:", err)
-		return
-	}
 }
 
 func (build *Build) start() {
@@ -230,7 +199,7 @@ func (build *Build) pass() {
 	build.Complete = true
 	build.Success = true
 	build.Result = "pass"
-	build.save()
+	database.SaveBuild(build)
 	build.executeHooks()
 }
 
@@ -238,7 +207,7 @@ func (build *Build) fail() {
 	build.Complete = true
 	build.Success = false
 	build.Result = "fail"
-	build.save()
+	database.SaveBuild(build)
 	build.executeHooks()
 }
 
