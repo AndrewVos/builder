@@ -13,6 +13,10 @@ type FakeGit struct {
 	FakeRepo string
 }
 
+func init() {
+	git = FakeGit{FakeRepo: ""}
+}
+
 func (git FakeGit) Retrieve(log io.Writer, url string, path string, branch string, sha string) error {
 	files, _ := ioutil.ReadDir("test-repos/" + git.FakeRepo)
 	os.MkdirAll(path, 0700)
@@ -53,5 +57,4 @@ func cleanup() {
 	db.Query("DELETE FROM builds").Run()
 	db.Query("DELETE FROM commits").Run()
 	os.RemoveAll("data")
-	git = Git{}
 }
