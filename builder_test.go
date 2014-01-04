@@ -205,8 +205,6 @@ func TestStoresPushInfo(t *testing.T) {
 		Commit{Sha: "576be25d7e3d5320e92472d5734b50b17c1822e0", Message: "output something", Url: "https://github.com/AndrewVos/builder-test-green-repo/commit/576be25d7e3d5320e92472d5734b50b17c1822e0"},
 	}
 
-	build.ReadCommits()
-
 	if len(build.Commits) != 2 {
 		t.Fatalf("Expected two commits, but got %d\n", len(build.Commits))
 	}

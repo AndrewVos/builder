@@ -104,15 +104,30 @@ func (p *PostgresDatabase) AllBuilds() []*Build {
 
 	var builds []*Build
 	err = db.Query("SELECT * FROM builds").Rows(&builds)
+
 	if err != nil {
 		fmt.Println("Error getting all builds: ", err)
 		return nil
 	}
 
-	for _, build := range builds {
-		err := build.ReadCommits()
+	if len(builds) > 0 {
+		var buildIds []int
+		buildsById := map[int]*Build{}
+		for _, build := range builds {
+			buildIds = append(buildIds, build.Id)
+			buildsById[build.Id] = build
+		}
+
+		var commits []Commit
+		err = db.Query("SELECT * FROM commits WHERE build_id IN ( $1 )", buildIds).Rows(&commits)
 		if err != nil {
-			fmt.Println("Error retrieving commits for build: ", err)
+			fmt.Println("Error getting commits:", err)
+			return nil
+		}
+
+		for _, commit := range commits {
+			build := buildsById[commit.BuildId]
+			build.Commits = append(build.Commits, commit)
 		}
 	}
 

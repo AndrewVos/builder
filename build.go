@@ -42,24 +42,6 @@ func init() {
 	}
 }
 
-func (build *Build) ReadCommits() error {
-	var commits []Commit
-
-	db, err := connect()
-	if err != nil {
-		return err
-	}
-
-	err = db.Query("SELECT * FROM commits WHERE build_id = $1", build.Id).Rows(&commits)
-	if err != nil {
-		fmt.Println("Error getting commits:", err)
-		return err
-	}
-
-	build.Commits = commits
-	return nil
-}
-
 func (build *Build) start() {
 	err := os.MkdirAll(build.Path(), 0700)
 	if err != nil {
