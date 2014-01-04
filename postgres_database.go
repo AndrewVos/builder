@@ -140,8 +140,8 @@ func (p *PostgresDatabase) CreateBuild(owner string, repo string, ref string, sh
 		return nil, err
 	}
 
-	githubBuild, exists := FindGithubBuild(owner, repo)
-	if !exists {
+	githubBuild := p.FindGithubBuild(owner, repo)
+	if githubBuild == nil {
 		err = errors.New(fmt.Sprintf("Someone tried to create a build but we don't have an access token :/\n%v/%v", owner, repo))
 		fmt.Println(err)
 		return nil, err
@@ -186,4 +186,30 @@ func (p *PostgresDatabase) CreateBuild(owner string, repo string, ref string, sh
 	}
 
 	return build, nil
+}
+
+func (p *PostgresDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	var builds []*GithubBuild
+	err = db.Query(`
+    SELECT * FROM github_builds
+      WHERE   owner      = $1
+      AND     repository = $2
+    `, owner, repository).Rows(&builds)
+
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	if len(builds) == 0 {
+		return nil
+	}
+
+	return builds[0]
 }

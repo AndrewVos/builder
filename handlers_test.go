@@ -50,6 +50,10 @@ func (f *FakeDatabase) CreateBuild(owner string, repo string, ref string, sha st
 	return nil, nil
 }
 
+func (f *FakeDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {
+	return nil
+}
+
 func createFakeRequest(bodyPath string) *http.Request {
 	b, _ := ioutil.ReadFile(bodyPath)
 	reader := bytes.NewReader(b)

@@ -71,8 +71,8 @@ func (build *Build) start() {
 }
 
 func (build *Build) checkout(output *os.File) error {
-	githubBuild, found := FindGithubBuild(build.Owner, build.Repository)
-	if !found {
+	githubBuild := database.FindGithubBuild(build.Owner, build.Repository)
+	if githubBuild == nil {
 		return errors.New("Don't have access to build this project")
 	}
 	url := "https://" + githubBuild.AccessToken + "@github.com/" + build.Owner + "/" + build.Repository

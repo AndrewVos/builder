@@ -30,3 +30,22 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 		}
 	}
 }
+
+func TestFindGithubBuild(t *testing.T) {
+	db := &PostgresDatabase{}
+	b1 := &GithubBuild{Owner: "ownerrr", Repository: "repo1"}
+	b2 := &GithubBuild{Owner: "erm", Repository: "repo2"}
+	db.SaveGithubBuild(b1)
+	db.SaveGithubBuild(b2)
+
+	ghb := db.FindGithubBuild("erm", "repo2")
+
+	if ghb == nil || ghb.Owner != "erm" || ghb.Repository != "repo2" {
+		t.Errorf("Expected to find github build:\n%+v\nActual:\n%+v\n", b2, ghb)
+	}
+
+	ghb = db.FindGithubBuild("losdsds", "sd")
+	if ghb != nil {
+		t.Errorf("Expected not to find a github build, but found:\n%+v\n", ghb)
+	}
+}
