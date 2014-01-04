@@ -13,4 +13,3 @@ else
   docker run -i -v `pwd`:/gopath/src/github.com/AndrewVos/builder \
                      AndrewVos/builder ./Builderfile build
 fi
-
