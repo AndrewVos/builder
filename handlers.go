@@ -119,7 +119,7 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 	sha, _ := pullRequest.Get("pull_request").Get("head").Get("sha").String()
 	githubURL, _ := pullRequest.Get("pull_request").Get("_links").Get("self").Get("href").String()
 
-	build, err := CreateBuild(
+	err = launcher.LaunchBuild(
 		strings.Split(fullName, "/")[0],
 		strings.Split(fullName, "/")[1],
 		ref,
@@ -131,7 +131,6 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-	build.start()
 }
 
 func buildsHandler(w http.ResponseWriter, r *http.Request) {
