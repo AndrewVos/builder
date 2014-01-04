@@ -23,6 +23,7 @@ func connect() (*jet.Db, error) {
 
 type Database interface {
 	SaveGithubBuild(ghb *GithubBuild) error
+	SaveCommit(commit *Commit) error
 }
 
 type PostgresDatabase struct {
@@ -44,5 +45,24 @@ func (p *PostgresDatabase) SaveGithubBuild(ghb *GithubBuild) error {
 		return err
 	}
 
+	return nil
+}
+
+func (p *PostgresDatabase) SaveCommit(commit *Commit) error {
+	db, err := connect()
+	if err != nil {
+		return err
+	}
+
+	err = db.Query(`
+    INSERT INTO commits (build_id, sha, message, url)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `, commit.BuildId, commit.Sha, commit.Message, commit.Url,
+	).Rows(&commit)
+
+	if err != nil {
+		return err
+	}
 	return nil
 }

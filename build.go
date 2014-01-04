@@ -34,26 +34,6 @@ type Commit struct {
 	Url     string
 }
 
-func (commit *Commit) Save() error {
-	db, err := connect()
-	if err != nil {
-		return err
-	}
-
-	err = db.Query(`
-    INSERT INTO commits (build_id, sha, message, url)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *
-    `, commit.BuildId, commit.Sha, commit.Message, commit.Url,
-	).Rows(&commit)
-
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return nil
-}
-
 func init() {
 	for _, build := range AllBuilds() {
 		if build.Complete == false {
@@ -126,7 +106,7 @@ func CreateBuild(owner string, repo string, ref string, sha string, githubURL st
 
 	for _, commit := range commits {
 		commit.BuildId = build.Id
-		commit.Save()
+		database.SaveCommit(&commit)
 	}
 
 	return build, nil
