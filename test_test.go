@@ -53,9 +53,9 @@ func setup(fakeRepo string) {
 		git = &FakeGit{FakeRepo: fakeRepo}
 	}
 
-	persister := &GithubBuildPostgresPersister{}
-	persister.Save(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-green-repo"})
-	persister.Save(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-red-repo"})
+	database := &PostgresDatabase{}
+	database.SaveGithubBuild(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-green-repo"})
+	database.SaveGithubBuild(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-red-repo"})
 }
 
 func cleanup() {

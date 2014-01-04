@@ -13,7 +13,6 @@ type FakeBuildLauncher struct {
 	commits []Commit
 }
 
-func (bl *FakeBuildLauncher) Do(build *Build) {}
 func (fbl *FakeBuildLauncher) LaunchBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) error {
 	fbl.values = map[string]interface{}{
 		"owner":     owner,
@@ -26,11 +25,11 @@ func (fbl *FakeBuildLauncher) LaunchBuild(owner string, repo string, ref string,
 	return nil
 }
 
-type FakeGithubBuildPersister struct {
+type FakeDatabase struct {
 	GithubBuild *GithubBuild
 }
 
-func (f *FakeGithubBuildPersister) Save(ghb *GithubBuild) error {
+func (f *FakeDatabase) SaveGithubBuild(ghb *GithubBuild) error {
 	f.GithubBuild = ghb
 	return nil
 }
@@ -104,10 +103,10 @@ func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
 	setup("")
 	defer cleanup()
 
-	oldBuildPersister := githubBuildPersister
-	fakePersister := &FakeGithubBuildPersister{}
-	githubBuildPersister = fakePersister
-	defer func() { githubBuildPersister = oldBuildPersister }()
+	oldDatabase := database
+	fakeDatabase := &FakeDatabase{}
+	database = fakeDatabase
+	defer func() { database = oldDatabase }()
 
 	formValues := url.Values{}
 	formValues.Set("owner", "RepoOwnerrr")
@@ -131,13 +130,13 @@ func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
 		}
 	}
 
-	if fakePersister.GithubBuild.AccessToken != expectedValues["accessToken"] {
-		t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fakePersister.GithubBuild.AccessToken)
+	if fakeDatabase.GithubBuild.AccessToken != expectedValues["accessToken"] {
+		t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fakeDatabase.GithubBuild.AccessToken)
 	}
-	if fakePersister.GithubBuild.Owner != expectedValues["owner"] {
-		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakePersister.GithubBuild.AccessToken)
+	if fakeDatabase.GithubBuild.Owner != expectedValues["owner"] {
+		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakeDatabase.GithubBuild.AccessToken)
 	}
-	if fakePersister.GithubBuild.Repository != expectedValues["repository"] {
-		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakePersister.GithubBuild.AccessToken)
+	if fakeDatabase.GithubBuild.Repository != expectedValues["repository"] {
+		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.GithubBuild.AccessToken)
 	}
 }

@@ -9,8 +9,8 @@ func TestBuildUrl(t *testing.T) {
 	setup("")
 	defer cleanup()
 
-	persister := &GithubBuildPostgresPersister{}
-	persister.Save(&GithubBuild{Owner: "bla", Repository: "repooo"})
+	database := &PostgresDatabase{}
+	database.SaveGithubBuild(&GithubBuild{Owner: "bla", Repository: "repooo"})
 	build, _ := CreateBuild("bla", "repooo", "", "", "", nil)
 	expected := "http://localhost:1212/build_output?id=" + strconv.Itoa(build.Id)
 	if build.Url != expected {
@@ -26,8 +26,8 @@ func TestBuildUrlPort80(t *testing.T) {
 	configuration.Port = "80"
 	defer func() { configuration.Port = oldPort }()
 
-	persister := &GithubBuildPostgresPersister{}
-	persister.Save(&GithubBuild{Owner: "bla", Repository: "repooo"})
+	database := &PostgresDatabase{}
+	database.SaveGithubBuild(&GithubBuild{Owner: "bla", Repository: "repooo"})
 	build, _ := CreateBuild("bla", "repooo", "", "", "", nil)
 	expected := "http://localhost/build_output?id=" + strconv.Itoa(build.Id)
 	if build.Url != expected {

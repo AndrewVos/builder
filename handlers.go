@@ -13,11 +13,11 @@ import (
 )
 
 var launcher BuildLauncher
-var githubBuildPersister GithubBuildPersister
+var database Database
 
 func init() {
 	launcher = &Builder{}
-	githubBuildPersister = &GithubBuildPostgresPersister{}
+	database = &PostgresDatabase{}
 }
 
 type BuildLauncher interface {
@@ -190,7 +190,7 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = githubBuildPersister.Save(&GithubBuild{
+		err = database.SaveGithubBuild(&GithubBuild{
 			AccessToken: accessToken,
 			Owner:       owner,
 			Repository:  repository,
