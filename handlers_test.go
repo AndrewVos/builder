@@ -149,43 +149,37 @@ func TestPullRequestHandlerLaunchesBuildWithCorrectValues(t *testing.T) {
 }
 
 func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
-	setup("")
-	defer cleanup()
+	withFakeDatabase(func(fdb *FakeDatabase) {
+		formValues := url.Values{}
+		formValues.Set("owner", "RepoOwnerrr")
+		formValues.Set("repository", "RailsTurboLinks")
 
-	oldDatabase := database
-	fakeDatabase := &FakeDatabase{}
-	database = fakeDatabase
-	defer func() { database = oldDatabase }()
+		r, _ := http.NewRequest("", "", nil)
+		r.PostForm = formValues
+		r.AddCookie(&http.Cookie{Name: "github_access_token", Value: "somethingsomething"})
+		addRepositoryHandler(nil, r)
+		fakeGit := git.(*FakeGit)
 
-	formValues := url.Values{}
-	formValues.Set("owner", "RepoOwnerrr")
-	formValues.Set("repository", "RailsTurboLinks")
-
-	r, _ := http.NewRequest("", "", nil)
-	r.PostForm = formValues
-	r.AddCookie(&http.Cookie{Name: "github_access_token", Value: "somethingsomething"})
-	addRepositoryHandler(nil, r)
-	fakeGit := git.(*FakeGit)
-
-	expectedValues := map[string]interface{}{
-		"accessToken": "somethingsomething",
-		"owner":       "RepoOwnerrr",
-		"repository":  "RailsTurboLinks",
-	}
-
-	for field, expectedValue := range expectedValues {
-		if actual := fakeGit.createHooksParameters[field]; actual != expectedValue {
-			t.Errorf("Expected create hook parameter %q to be %q, but was %q\n", field, expectedValue, actual)
+		expectedValues := map[string]interface{}{
+			"accessToken": "somethingsomething",
+			"owner":       "RepoOwnerrr",
+			"repository":  "RailsTurboLinks",
 		}
-	}
 
-	if fakeDatabase.GithubBuild.AccessToken != expectedValues["accessToken"] {
-		t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fakeDatabase.GithubBuild.AccessToken)
-	}
-	if fakeDatabase.GithubBuild.Owner != expectedValues["owner"] {
-		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakeDatabase.GithubBuild.AccessToken)
-	}
-	if fakeDatabase.GithubBuild.Repository != expectedValues["repository"] {
-		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.GithubBuild.AccessToken)
-	}
+		for field, expectedValue := range expectedValues {
+			if actual := fakeGit.createHooksParameters[field]; actual != expectedValue {
+				t.Errorf("Expected create hook parameter %q to be %q, but was %q\n", field, expectedValue, actual)
+			}
+		}
+
+		if fdb.GithubBuild.AccessToken != expectedValues["accessToken"] {
+			t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fdb.GithubBuild.AccessToken)
+		}
+		if fdb.GithubBuild.Owner != expectedValues["owner"] {
+			t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fdb.GithubBuild.AccessToken)
+		}
+		if fdb.GithubBuild.Repository != expectedValues["repository"] {
+			t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fdb.GithubBuild.AccessToken)
+		}
+	})
 }
