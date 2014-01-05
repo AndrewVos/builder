@@ -10,12 +10,7 @@ if [ "$1" == "build" ]; then
   go get bitbucket.org/liamstask/goose/cmd/goose
   goose up
 
-  go get github.com/kr/pty
-  go get github.com/bitly/go-simplejson
-  go get github.com/hoisie/mustache
-  go get github.com/eaigner/jet
-  go get github.com/lib/pq
-
+  go get
   go test
 else
   docker build -t AndrewVos/builder .
