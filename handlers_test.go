@@ -51,6 +51,11 @@ func (f *FakeDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) error
 }
 
 func (f *FakeDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {
+	if f.GithubBuild != nil {
+		if f.GithubBuild.Owner == owner && f.GithubBuild.Repository == repository {
+			return f.GithubBuild
+		}
+	}
 	return nil
 }
 

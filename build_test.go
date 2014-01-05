@@ -1,7 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -42,4 +44,60 @@ func TestBuildUrlPort80(t *testing.T) {
 	if build.Url != expected {
 		t.Errorf("Expected:\n%v\nGot:\n%v\n", expected, build.Url)
 	}
+}
+
+func TestFailingBuild(t *testing.T) {
+	withFakeDatabase(func(fdb *FakeDatabase) {
+		setup("red")
+		ghb := &GithubBuild{Owner: "some-owner", Repository: "some-repo"}
+		fdb.GithubBuild = ghb
+
+		database.SaveGithubBuild(ghb)
+
+		build := &Build{Owner: "some-owner", Repository: "some-repo"}
+
+		build.start()
+
+		if !build.Complete {
+			t.Error("Build should be complete")
+		}
+		if build.Success {
+			t.Error("Build should not be successful")
+		}
+		if build.Result != "fail" {
+			t.Error("Build should have failed")
+		}
+
+		buildOutput, _ := ioutil.ReadFile(build.LogPath())
+		if expected := "FAILING BUILD"; strings.Contains(string(buildOutput), expected) == false {
+			t.Errorf("Expected log to contain %q. Got:\n%v", expected, string(buildOutput))
+		}
+	})
+}
+
+func TestPassingBuild(t *testing.T) {
+	withFakeDatabase(func(fdb *FakeDatabase) {
+		setup("green")
+		ghb := &GithubBuild{Owner: "some-owner", Repository: "some-repo"}
+		fdb.GithubBuild = ghb
+
+		build := &Build{Owner: "some-owner", Repository: "some-repo"}
+
+		build.start()
+
+		if !build.Complete {
+			t.Error("Build should be complete")
+		}
+		if !build.Success {
+			t.Error("Build should be successful")
+		}
+		if build.Result != "pass" {
+			t.Error("Build should have passed")
+		}
+
+		buildOutput, _ := ioutil.ReadFile(build.LogPath())
+		if expected := "SUCCESSFUL BUILD"; strings.Contains(string(buildOutput), expected) == false {
+			t.Errorf("Expected log to contain %q. Got:\n%v", expected, string(buildOutput))
+		}
+	})
 }
