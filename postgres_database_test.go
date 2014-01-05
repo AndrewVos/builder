@@ -4,6 +4,14 @@ import (
 	"testing"
 )
 
+func createCleanPostgresDatabase() *PostgresDatabase {
+	db, _ := connect()
+	db.Query("DELETE FROM github_builds").Run()
+	db.Query("DELETE FROM builds").Run()
+	db.Query("DELETE FROM commits").Run()
+	return &PostgresDatabase{}
+}
+
 func TestAllBuildsLoadsCommits(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
@@ -49,11 +57,6 @@ func TestFindGithubBuild(t *testing.T) {
 	if ghb != nil {
 		t.Errorf("Expected not to find a github build, but found:\n%+v\n", ghb)
 	}
-}
-
-func createCleanPostgresDatabase() *PostgresDatabase {
-	cleanDatabase()
-	return &PostgresDatabase{}
 }
 
 func TestIncompleteBuilds(t *testing.T) {

@@ -3,11 +3,19 @@ package main
 import (
 	"io"
 	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 	"os"
-	"strings"
 )
+
+var fakeGit *FakeGit
+var fakeDatabase *FakeDatabase
+
+func init() {
+	fakeGit = &FakeGit{}
+	git = fakeGit
+
+	fakeDatabase = &FakeDatabase{}
+	database = fakeDatabase
+}
 
 type FakeGit struct {
 	FakeRepo              string
@@ -33,47 +41,40 @@ func (g *FakeGit) CreateHooks(accessToken string, owner string, repo string) err
 	return nil
 }
 
-func postToHooks(path string, event string) {
-	b, _ := ioutil.ReadFile(path)
-	request, _ := http.NewRequest("POST", "/hooks/"+event, nil)
-	request.Body = ioutil.NopCloser(strings.NewReader(string(b)))
-	w := httptest.NewRecorder()
-	if event == "push" {
-		pushHandler(w, request)
-	} else if event == "pull_request" {
-		pullRequestHandler(w, request)
+type FakeDatabase struct {
+	GithubBuild *GithubBuild
+}
+
+func (f *FakeDatabase) SaveGithubBuild(ghb *GithubBuild) error {
+	f.GithubBuild = ghb
+	return nil
+}
+
+func (f *FakeDatabase) SaveCommit(commit *Commit) error {
+	return nil
+}
+
+func (f *FakeDatabase) SaveBuild(build *Build) error {
+	return nil
+}
+
+func (f *FakeDatabase) AllBuilds() []*Build {
+	return nil
+}
+
+func (f *FakeDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) error {
+	return nil
+}
+
+func (f *FakeDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {
+	if f.GithubBuild != nil {
+		if f.GithubBuild.Owner == owner && f.GithubBuild.Repository == repository {
+			return f.GithubBuild
+		}
 	}
+	return nil
 }
 
-func setup(fakeRepo string) {
-	os.Mkdir("data", 0700)
-	os.Mkdir("data/hooks", 0700)
-
-	if fakeRepo != "" {
-		git = &FakeGit{FakeRepo: fakeRepo}
-	}
-
-	database := &PostgresDatabase{}
-	database.SaveGithubBuild(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-green-repo"})
-	database.SaveGithubBuild(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-red-repo"})
-}
-
-func withFakeDatabase(block func(fdb *FakeDatabase)) {
-	oldDatabase := database
-	fdb := &FakeDatabase{}
-	database = fdb
-	block(fdb)
-	database = oldDatabase
-}
-
-func cleanDatabase() {
-	db, _ := connect()
-	db.Query("DELETE FROM github_builds").Run()
-	db.Query("DELETE FROM builds").Run()
-	db.Query("DELETE FROM commits").Run()
-}
-
-func cleanup() {
-	cleanDatabase()
-	os.RemoveAll("data")
+func (f *FakeDatabase) IncompleteBuilds() []*Build {
+	return nil
 }

@@ -27,44 +27,6 @@ func (fbl *FakeBuildLauncher) LaunchBuild(owner string, repo string, ref string,
 	return nil
 }
 
-type FakeDatabase struct {
-	GithubBuild *GithubBuild
-}
-
-func (f *FakeDatabase) SaveGithubBuild(ghb *GithubBuild) error {
-	f.GithubBuild = ghb
-	return nil
-}
-
-func (f *FakeDatabase) SaveCommit(commit *Commit) error {
-	return nil
-}
-
-func (f *FakeDatabase) SaveBuild(build *Build) error {
-	return nil
-}
-
-func (f *FakeDatabase) AllBuilds() []*Build {
-	return nil
-}
-
-func (f *FakeDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) error {
-	return nil
-}
-
-func (f *FakeDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {
-	if f.GithubBuild != nil {
-		if f.GithubBuild.Owner == owner && f.GithubBuild.Repository == repository {
-			return f.GithubBuild
-		}
-	}
-	return nil
-}
-
-func (f *FakeDatabase) IncompleteBuilds() []*Build {
-	return nil
-}
-
 func createFakeRequest(bodyPath string) *http.Request {
 	b, _ := ioutil.ReadFile(bodyPath)
 	reader := bytes.NewReader(b)
@@ -149,37 +111,35 @@ func TestPullRequestHandlerLaunchesBuildWithCorrectValues(t *testing.T) {
 }
 
 func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
-	withFakeDatabase(func(fdb *FakeDatabase) {
-		formValues := url.Values{}
-		formValues.Set("owner", "RepoOwnerrr")
-		formValues.Set("repository", "RailsTurboLinks")
+	formValues := url.Values{}
+	formValues.Set("owner", "RepoOwnerrr")
+	formValues.Set("repository", "RailsTurboLinks")
 
-		r, _ := http.NewRequest("", "", nil)
-		r.PostForm = formValues
-		r.AddCookie(&http.Cookie{Name: "github_access_token", Value: "somethingsomething"})
-		addRepositoryHandler(nil, r)
-		fakeGit := git.(*FakeGit)
+	r, _ := http.NewRequest("", "", nil)
+	r.PostForm = formValues
+	r.AddCookie(&http.Cookie{Name: "github_access_token", Value: "somethingsomething"})
+	addRepositoryHandler(nil, r)
+	fakeGit := git.(*FakeGit)
 
-		expectedValues := map[string]interface{}{
-			"accessToken": "somethingsomething",
-			"owner":       "RepoOwnerrr",
-			"repository":  "RailsTurboLinks",
-		}
+	expectedValues := map[string]interface{}{
+		"accessToken": "somethingsomething",
+		"owner":       "RepoOwnerrr",
+		"repository":  "RailsTurboLinks",
+	}
 
-		for field, expectedValue := range expectedValues {
-			if actual := fakeGit.createHooksParameters[field]; actual != expectedValue {
-				t.Errorf("Expected create hook parameter %q to be %q, but was %q\n", field, expectedValue, actual)
-			}
+	for field, expectedValue := range expectedValues {
+		if actual := fakeGit.createHooksParameters[field]; actual != expectedValue {
+			t.Errorf("Expected create hook parameter %q to be %q, but was %q\n", field, expectedValue, actual)
 		}
+	}
 
-		if fdb.GithubBuild.AccessToken != expectedValues["accessToken"] {
-			t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fdb.GithubBuild.AccessToken)
-		}
-		if fdb.GithubBuild.Owner != expectedValues["owner"] {
-			t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fdb.GithubBuild.AccessToken)
-		}
-		if fdb.GithubBuild.Repository != expectedValues["repository"] {
-			t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fdb.GithubBuild.AccessToken)
-		}
-	})
+	if fakeDatabase.GithubBuild.AccessToken != expectedValues["accessToken"] {
+		t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fakeDatabase.GithubBuild.AccessToken)
+	}
+	if fakeDatabase.GithubBuild.Owner != expectedValues["owner"] {
+		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakeDatabase.GithubBuild.AccessToken)
+	}
+	if fakeDatabase.GithubBuild.Repository != expectedValues["repository"] {
+		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.GithubBuild.AccessToken)
+	}
 }

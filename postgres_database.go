@@ -161,11 +161,11 @@ func (p *PostgresDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) e
 	}
 	build.Url += "/build_output?id=" + strconv.Itoa(build.Id)
 
-	database.SaveBuild(build)
+	p.SaveBuild(build)
 
 	for _, commit := range build.Commits {
 		commit.BuildId = build.Id
-		database.SaveCommit(&commit)
+		p.SaveCommit(&commit)
 	}
 
 	return nil
