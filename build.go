@@ -34,14 +34,6 @@ type Commit struct {
 	Url     string
 }
 
-func init() {
-	for _, build := range database.AllBuilds() {
-		if build.Complete == false {
-			build.fail()
-		}
-	}
-}
-
 func (build *Build) start() {
 	err := os.MkdirAll(build.Path(), 0700)
 	if err != nil {

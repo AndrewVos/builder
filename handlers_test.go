@@ -54,6 +54,10 @@ func (f *FakeDatabase) FindGithubBuild(owner string, repository string) *GithubB
 	return nil
 }
 
+func (f *FakeDatabase) IncompleteBuilds() []*Build {
+	return nil
+}
+
 func createFakeRequest(bodyPath string) *http.Request {
 	b, _ := ioutil.ReadFile(bodyPath)
 	reader := bytes.NewReader(b)

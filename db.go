@@ -7,4 +7,5 @@ type Database interface {
 	AllBuilds() []*Build
 	CreateBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) (*Build, error)
 	FindGithubBuild(owner string, repository string) *GithubBuild
+	IncompleteBuilds() []*Build
 }

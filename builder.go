@@ -9,7 +9,16 @@ var githubDomain string = "https://api.github.com"
 var git GitTool
 
 func main() {
+	deleteIncompleteBuilds()
 	serve()
+}
+
+func deleteIncompleteBuilds() {
+	for _, build := range database.IncompleteBuilds() {
+		if build.Complete == false {
+			build.fail()
+		}
+	}
 }
 
 func init() {

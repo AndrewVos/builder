@@ -49,3 +49,26 @@ func TestFindGithubBuild(t *testing.T) {
 		t.Errorf("Expected not to find a github build, but found:\n%+v\n", ghb)
 	}
 }
+
+func createCleanPostgresDatabase() *PostgresDatabase {
+	cleanDatabase()
+	return &PostgresDatabase{}
+}
+
+func TestIncompleteBuilds(t *testing.T) {
+	db := createCleanPostgresDatabase()
+	ghb := &GithubBuild{Owner: "ownerrr", Repository: "repo1"}
+	db.SaveGithubBuild(ghb)
+
+	build, _ := db.CreateBuild("ownerrr", "repo1", "", "", "", nil)
+	build.Complete = true
+	db.SaveBuild(build)
+
+	build, _ = db.CreateBuild("ownerrr", "repo1", "", "", "", nil)
+	build.Complete = false
+
+	builds := db.IncompleteBuilds()
+	if len(builds) != 1 {
+		t.Errorf("We should only return one build, because only one is incomplete\n%+v\n", builds)
+	}
+}

@@ -213,3 +213,24 @@ func (p *PostgresDatabase) FindGithubBuild(owner string, repository string) *Git
 
 	return builds[0]
 }
+
+func (p *PostgresDatabase) IncompleteBuilds() []*Build {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	var builds []*Build
+	err = db.Query(`
+    SELECT * FROM builds
+      WHERE   complete = $1
+    `, false).Rows(&builds)
+
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	return builds
+}

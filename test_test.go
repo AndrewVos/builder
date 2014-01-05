@@ -58,10 +58,14 @@ func setup(fakeRepo string) {
 	database.SaveGithubBuild(&GithubBuild{AccessToken: "hello", Owner: "AndrewVos", Repository: "builder-test-red-repo"})
 }
 
-func cleanup() {
+func cleanDatabase() {
 	db, _ := connect()
 	db.Query("DELETE FROM github_builds").Run()
 	db.Query("DELETE FROM builds").Run()
 	db.Query("DELETE FROM commits").Run()
+}
+
+func cleanup() {
+	cleanDatabase()
 	os.RemoveAll("data")
 }
