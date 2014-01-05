@@ -9,28 +9,6 @@ import (
 	"time"
 )
 
-func TestClosedPullRequest(t *testing.T) {
-	setup("green")
-	defer cleanup()
-
-	postToHooks("test-data/closed_pull_request.json", "pull_request")
-
-	if len(database.AllBuilds()) > 0 {
-		t.Errorf("Erm, probably shouldn't build a closed pull request")
-	}
-}
-
-func TestDeleteBranch(t *testing.T) {
-	setup("green")
-	defer cleanup()
-
-	postToHooks("test-data/delete_branch_push.json", "push")
-
-	if len(database.AllBuilds()) > 0 {
-		t.Errorf("Erm, probably shouldn't build a delete branch push")
-	}
-}
-
 func TestFakeSomeBuilds(t *testing.T) {
 	if os.Getenv("FAKE_BUILDS") != "" {
 		setup("")
@@ -125,40 +103,5 @@ func TestStoresPullRequestInfo(t *testing.T) {
 	expected := "https://api.github.com/repos/AndrewVos/builder-test-green-repo/pulls/2"
 	if build.GithubUrl != expected {
 		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expected, build.GithubUrl)
-	}
-}
-
-func TestStoresPushInfo(t *testing.T) {
-	setup("green")
-	defer cleanup()
-
-	postToHooks("test-data/green_push.json", "push")
-
-	build := database.AllBuilds()[0]
-
-	commits := []Commit{
-		Commit{Sha: "92a9437adf4ac6f0114552e5149d0598fdbf0355", Message: "empty", Url: "https://github.com/AndrewVos/builder-test-green-repo/commit/92a9437adf4ac6f0114552e5149d0598fdbf0355"},
-		Commit{Sha: "576be25d7e3d5320e92472d5734b50b17c1822e0", Message: "output something", Url: "https://github.com/AndrewVos/builder-test-green-repo/commit/576be25d7e3d5320e92472d5734b50b17c1822e0"},
-	}
-
-	if len(build.Commits) != 2 {
-		t.Fatalf("Expected two commits, but got %d\n", len(build.Commits))
-	}
-
-	for i, expectedCommit := range commits {
-		if build.Commits[i].Sha != expectedCommit.Sha {
-			t.Errorf("Expected commit to have Sha:\n%vGot:\n%v\n", expectedCommit.Sha, build.Commits[i].Sha)
-		}
-		if build.Commits[i].Message != expectedCommit.Message {
-			t.Errorf("Expected commit to have Message:\n%vGot:\n%v\n", expectedCommit.Message, build.Commits[i].Message)
-		}
-		if build.Commits[i].Url != expectedCommit.Url {
-			t.Errorf("Expected commit to have Url:\n%vGot:\n%v\n", expectedCommit.Url, build.Commits[i].Url)
-		}
-	}
-
-	expectedGithubUrl := "https://github.com/AndrewVos/builder-test-green-repo/compare/da46166aa120...576be25d7e3d"
-	if build.GithubUrl != expectedGithubUrl {
-		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expectedGithubUrl, build.GithubUrl)
 	}
 }

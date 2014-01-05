@@ -9,11 +9,13 @@ import (
 )
 
 type FakeBuildLauncher struct {
-	values  map[string]interface{}
-	commits []Commit
+	values        map[string]interface{}
+	commits       []Commit
+	launchedBuild bool
 }
 
 func (fbl *FakeBuildLauncher) LaunchBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) error {
+	fbl.launchedBuild = true
 	fbl.values = map[string]interface{}{
 		"owner":     owner,
 		"repo":      repo,
@@ -104,6 +106,24 @@ func TestPushHandlerLaunchesBuildWithCorrectValues(t *testing.T) {
 			if fbl.commits[i] != expected {
 				t.Errorf("Expected commit %d to be:\n%v\nActual:\n%v\n", i, expected, fbl.commits[i])
 			}
+		}
+	})
+}
+
+func TestPushHandlerIgnoresDeletedBranches(t *testing.T) {
+	withFakeLauncher(func(fbl *FakeBuildLauncher) {
+		pushHandler(nil, createFakeRequest("test-data/delete_branch_push.json"))
+		if fbl.launchedBuild {
+			t.Error("Shouldn't build deleted branch pushes")
+		}
+	})
+}
+
+func TestPullRequestHandlerIgnoresClosedPullRequest(t *testing.T) {
+	withFakeLauncher(func(fbl *FakeBuildLauncher) {
+		pullRequestHandler(nil, createFakeRequest("test-data/closed_pull_request.json"))
+		if fbl.launchedBuild {
+			t.Error("Shouldn't build closed pull requests")
 		}
 	})
 }
