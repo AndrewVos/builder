@@ -5,7 +5,7 @@ import (
 )
 
 func TestAllBuildsLoadsCommits(t *testing.T) {
-	db := &PostgresDatabase{}
+	db := createCleanPostgresDatabase()
 
 	ghb := &GithubBuild{Owner: "ownerrr", Repository: "repo1"}
 	db.SaveGithubBuild(ghb)
@@ -32,7 +32,7 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 }
 
 func TestFindGithubBuild(t *testing.T) {
-	db := &PostgresDatabase{}
+	db := createCleanPostgresDatabase()
 	b1 := &GithubBuild{Owner: "ownerrr", Repository: "repo1"}
 	b2 := &GithubBuild{Owner: "erm", Repository: "repo2"}
 	db.SaveGithubBuild(b1)
