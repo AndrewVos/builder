@@ -102,7 +102,7 @@ func (p *PostgresDatabase) AllBuilds() []*Build {
 	}
 
 	var builds []*Build
-	err = db.Query("SELECT * FROM builds").Rows(&builds)
+	err = db.Query("SELECT * FROM builds ORDER BY id").Rows(&builds)
 
 	if err != nil {
 		fmt.Println("Error getting all builds: ", err)
