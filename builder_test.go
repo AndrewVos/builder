@@ -28,31 +28,6 @@ func TestFakeSomeBuilds(t *testing.T) {
 	}
 }
 
-func TestOutputEnvirons(t *testing.T) {
-	setup("environs")
-	defer cleanup()
-
-	postToHooks("test-data/output_environs_push.json", "push")
-
-	build := database.AllBuilds()[0]
-
-	expectedLines := []string{
-		"BUILDER_BUILD_URL=" + build.Url,
-		"BUILDER_BUILD_ID=" + strconv.Itoa(build.Id),
-		"BUILDER_BUILD_OWNER=" + build.Owner,
-		"BUILDER_BUILD_REPO=" + build.Repository,
-		"BUILDER_BUILD_REF=" + build.Ref,
-		"BUILDER_BUILD_SHA=" + build.Sha,
-	}
-	actual := build.ReadOutput()
-
-	for _, expected := range expectedLines {
-		if strings.Contains(actual, expected) == false {
-			t.Errorf("Expected build output to contain:\n%v\nGot this instead:\n%v", expected, actual)
-		}
-	}
-}
-
 func TestExecutesHooksWithEnvirons(t *testing.T) {
 	setup("green")
 	defer cleanup()
@@ -90,18 +65,5 @@ BUILDER_BUILD_SHA=7f39d6495acae9db022cc20e7f0d940158e0337d`
 	actual := strings.TrimSpace(string(b))
 	if actual != expected {
 		t.Errorf("Expected:\n%v\nGot:\n%v\n", expected, actual)
-	}
-}
-
-func TestStoresPullRequestInfo(t *testing.T) {
-	setup("green")
-	defer cleanup()
-
-	postToHooks("test-data/green_pull_request.json", "pull_request")
-
-	build := database.AllBuilds()[0]
-	expected := "https://api.github.com/repos/AndrewVos/builder-test-green-repo/pulls/2"
-	if build.GithubUrl != expected {
-		t.Errorf("Expected Github URL:\n%v\nGot:\n%v\n", expected, build.GithubUrl)
 	}
 }

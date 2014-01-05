@@ -80,7 +80,6 @@ func TestPassingBuild(t *testing.T) {
 		setup("green")
 		ghb := &GithubBuild{Owner: "some-owner", Repository: "some-repo"}
 		fdb.GithubBuild = ghb
-
 		build := &Build{Owner: "some-owner", Repository: "some-repo"}
 
 		build.start()
@@ -98,6 +97,40 @@ func TestPassingBuild(t *testing.T) {
 		buildOutput, _ := ioutil.ReadFile(build.LogPath())
 		if expected := "SUCCESSFUL BUILD"; strings.Contains(string(buildOutput), expected) == false {
 			t.Errorf("Expected log to contain %q. Got:\n%v", expected, string(buildOutput))
+		}
+	})
+}
+
+func TestOutputEnvirons(t *testing.T) {
+	withFakeDatabase(func(fdb *FakeDatabase) {
+		setup("environs")
+		ghb := &GithubBuild{Owner: "some-owner", Repository: "some-repo"}
+		fdb.GithubBuild = ghb
+		build := &Build{
+			Url:        " sdsdfsd",
+			Id:         23,
+			Owner:      "some-owner",
+			Repository: "some-repo",
+			Ref:        "sdfw23233",
+			Sha:        "ewf2f",
+		}
+
+		build.start()
+
+		expectedLines := []string{
+			"BUILDER_BUILD_URL=" + build.Url,
+			"BUILDER_BUILD_ID=" + strconv.Itoa(build.Id),
+			"BUILDER_BUILD_OWNER=" + build.Owner,
+			"BUILDER_BUILD_REPO=" + build.Repository,
+			"BUILDER_BUILD_REF=" + build.Ref,
+			"BUILDER_BUILD_SHA=" + build.Sha,
+		}
+		actual := build.ReadOutput()
+
+		for _, expected := range expectedLines {
+			if strings.Contains(actual, expected) == false {
+				t.Errorf("Expected build output to contain:\n%v\nGot this instead:\n%v", expected, actual)
+			}
 		}
 	})
 }
