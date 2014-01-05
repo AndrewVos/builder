@@ -10,8 +10,13 @@ func TestBuildUrl(t *testing.T) {
 	defer cleanup()
 
 	database := &PostgresDatabase{}
-	database.SaveGithubBuild(&GithubBuild{Owner: "bla", Repository: "repooo"})
-	build, _ := database.CreateBuild("bla", "repooo", "", "", "", nil)
+	githubBuild := &GithubBuild{Owner: "bla", Repository: "repooo"}
+	database.SaveGithubBuild(githubBuild)
+	build := &Build{
+		Owner:      "bla",
+		Repository: "repooo",
+	}
+	database.CreateBuild(githubBuild, build)
 	expected := "http://localhost:1212/build_output?id=" + strconv.Itoa(build.Id)
 	if build.Url != expected {
 		t.Errorf("Expected:\n%v\nGot:\n%v\n", expected, build.Url)
@@ -26,9 +31,13 @@ func TestBuildUrlPort80(t *testing.T) {
 	configuration.Port = "80"
 	defer func() { configuration.Port = oldPort }()
 
-	database := &PostgresDatabase{}
-	database.SaveGithubBuild(&GithubBuild{Owner: "bla", Repository: "repooo"})
-	build, _ := database.CreateBuild("bla", "repooo", "", "", "", nil)
+	githubBuild := &GithubBuild{Owner: "bla", Repository: "repooo"}
+	database.SaveGithubBuild(githubBuild)
+	build := &Build{
+		Owner:      "bla",
+		Repository: "repooo",
+	}
+	database.CreateBuild(githubBuild, build)
 	expected := "http://localhost/build_output?id=" + strconv.Itoa(build.Id)
 	if build.Url != expected {
 		t.Errorf("Expected:\n%v\nGot:\n%v\n", expected, build.Url)

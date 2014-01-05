@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/bitly/go-simplejson"
 	"github.com/hoisie/mustache"
@@ -23,16 +24,21 @@ type Builder struct {
 }
 
 func (builder *Builder) LaunchBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) error {
-	build, err := database.CreateBuild(
-		owner,
-		repo,
-		ref,
-		sha,
-		githubURL,
-		commits,
-	)
+	githubBuild := database.FindGithubBuild(owner, repo)
+	if githubBuild == nil {
+		return errors.New(fmt.Sprintf("Couldn't find access token to build %v/%v\n", owner, repo))
+	}
+
+	build := &Build{
+		Owner:      owner,
+		Repository: repo,
+		Ref:        ref,
+		Sha:        sha,
+		GithubUrl:  githubURL,
+		Commits:    commits,
+	}
+	err := database.CreateBuild(githubBuild, build)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	build.start()

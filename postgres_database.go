@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/eaigner/jet"
 	_ "github.com/lib/pq"
@@ -134,17 +133,10 @@ func (p *PostgresDatabase) AllBuilds() []*Build {
 	return builds
 }
 
-func (p *PostgresDatabase) CreateBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) (*Build, error) {
+func (p *PostgresDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) error {
 	db, err := connect()
 	if err != nil {
-		return nil, err
-	}
-
-	githubBuild := p.FindGithubBuild(owner, repo)
-	if githubBuild == nil {
-		err = errors.New(fmt.Sprintf("Someone tried to create a build but we don't have an access token :/\n%v/%v", owner, repo))
-		fmt.Println(err)
-		return nil, err
+		return err
 	}
 
 	var m []int
@@ -157,21 +149,12 @@ func (p *PostgresDatabase) CreateBuild(owner string, repo string, ref string, sh
 
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return err
 	}
-	build_id := m[0]
+	buildId := m[0]
 
-	build := &Build{
-		Id:         build_id,
-		Owner:      owner,
-		Repository: repo,
-		Ref:        ref,
-		Sha:        sha,
-		Result:     "incomplete",
-		GithubUrl:  githubURL,
-		Commits:    commits,
-	}
-
+	build.Id = buildId
+	build.Result = "incomplete"
 	build.Url = configuration.Host
 	if configuration.Port != "80" {
 		build.Url += ":" + configuration.Port
@@ -180,12 +163,12 @@ func (p *PostgresDatabase) CreateBuild(owner string, repo string, ref string, sh
 
 	database.SaveBuild(build)
 
-	for _, commit := range commits {
+	for _, commit := range build.Commits {
 		commit.BuildId = build.Id
 		database.SaveCommit(&commit)
 	}
 
-	return build, nil
+	return nil
 }
 
 func (p *PostgresDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {

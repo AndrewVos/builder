@@ -46,8 +46,8 @@ func (f *FakeDatabase) AllBuilds() []*Build {
 	return nil
 }
 
-func (f *FakeDatabase) CreateBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) (*Build, error) {
-	return nil, nil
+func (f *FakeDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) error {
+	return nil
 }
 
 func (f *FakeDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {

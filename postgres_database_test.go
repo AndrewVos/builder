@@ -15,7 +15,8 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 		Commit{Sha: "324mlkm", Message: "hi there", Url: "example.com"},
 	}
 
-	build, _ := db.CreateBuild("ownerrr", "repo1", "", "", "", commits)
+	build := &Build{Owner: "ownerrr", Repository: "repo1", Commits: commits}
+	db.CreateBuild(ghb, build)
 
 	build = db.AllBuilds()[0]
 	if len(build.Commits) != len(commits) {
@@ -60,12 +61,15 @@ func TestIncompleteBuilds(t *testing.T) {
 	ghb := &GithubBuild{Owner: "ownerrr", Repository: "repo1"}
 	db.SaveGithubBuild(ghb)
 
-	build, _ := db.CreateBuild("ownerrr", "repo1", "", "", "", nil)
+	build := &Build{Owner: "ownerrr", Repository: "repo1"}
+	db.CreateBuild(ghb, build)
 	build.Complete = true
 	db.SaveBuild(build)
 
-	build, _ = db.CreateBuild("ownerrr", "repo1", "", "", "", nil)
+	build = &Build{Owner: "ownerrr", Repository: "repo1"}
+	db.CreateBuild(ghb, build)
 	build.Complete = false
+	db.SaveBuild(build)
 
 	builds := db.IncompleteBuilds()
 	if len(builds) != 1 {
