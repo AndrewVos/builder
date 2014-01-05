@@ -14,6 +14,6 @@ if [ "$1" == "build" ]; then
   go test
 else
   docker build -t AndrewVos/builder .
-  docker run -i -v `pwd`:/gopath/src/github.com/AndrewVos/builder \
+  docker run -i -t -v `pwd`:/gopath/src/github.com/AndrewVos/builder \
                      AndrewVos/builder ./Builderfile build
 fi
