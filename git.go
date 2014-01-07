@@ -106,6 +106,8 @@ func (git Git) GetUserID(accessToken string) (int, error) {
 		return 0, err
 	}
 	b, err := ioutil.ReadAll(response.Body)
+	response.Body.Close()
+	fmt.Println(string(b))
 	if err != nil {
 		return 0, err
 	}
