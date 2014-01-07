@@ -105,13 +105,17 @@ func (git Git) GetUserID(accessToken string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	b, err := ioutil.ReadAll(response.Body)
 	response.Body.Close()
-	fmt.Println(string(b))
 	if err != nil {
 		return 0, err
 	}
+
 	var m map[string]interface{}
 	json.Unmarshal(b, &m)
-	return m["id"].(int), nil
+	if _, ok := m["id"]; ok {
+		return m["id"].(int), nil
+	}
+	return 0, err
 }
