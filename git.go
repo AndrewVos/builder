@@ -120,7 +120,7 @@ func (git Git) GetUserID(accessToken string) (int, error) {
 	var m map[string]interface{}
 	json.Unmarshal(b, &m)
 	if _, ok := m["id"]; ok {
-		return m["id"].(int), nil
+		return int(m["id"].(float64)), nil
 	}
 	return 0, fmt.Errorf("Couldn't unmarshal ID, json was:\n%v\nUrl:%v", string(b), url)
 }
