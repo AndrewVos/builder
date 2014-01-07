@@ -172,7 +172,8 @@ func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{Name: "github_access_token", Value: "empty", MaxAge: -1})
+	http.SetCookie(w, &http.Cookie{Name: "account_id", Value: "empty", MaxAge: -1})
+	http.SetCookie(w, &http.Cookie{Name: "token", Value: "empty", MaxAge: -1})
 	http.Redirect(w, r, "/", 302)
 }
 
