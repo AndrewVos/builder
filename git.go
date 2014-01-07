@@ -75,11 +75,12 @@ func (git Git) CreateHooks(accessToken string, owner string, repo string) error 
 
 func (git Git) GetAccessToken(clientId string, clientSecret string, code string) (string, error) {
 	body, _ := json.Marshal(map[string]interface{}{
-		"client_id":     configuration.GithubClientID,
-		"client_secret": configuration.GithubClientSecret,
+		"client_id":     clientId,
+		"client_secret": clientSecret,
 		"code":          code,
 	})
 
+	fmt.Println(string(body))
 	client := &http.Client{}
 	request, _ := http.NewRequest("POST", "https://github.com/login/oauth/access_token", bytes.NewReader(body))
 
@@ -96,6 +97,7 @@ func (git Git) GetAccessToken(clientId string, clientSecret string, code string)
 	var accessTokenResponse map[string]string
 	json.Unmarshal(body, &accessTokenResponse)
 
+	fmt.Println(accessTokenResponse)
 	return accessTokenResponse["access_token"], nil
 }
 

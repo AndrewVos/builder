@@ -216,8 +216,6 @@ func githubLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(accessToken)
-
 	githubUserID, err := git.GetUserID(accessToken)
 	if err != nil {
 		fmt.Println(err)
