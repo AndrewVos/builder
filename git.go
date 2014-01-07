@@ -80,7 +80,6 @@ func (git Git) GetAccessToken(clientId string, clientSecret string, code string)
 		"code":          code,
 	})
 
-	fmt.Println(string(body))
 	client := &http.Client{}
 	request, _ := http.NewRequest("POST", "https://github.com/login/oauth/access_token", bytes.NewReader(body))
 
@@ -98,7 +97,11 @@ func (git Git) GetAccessToken(clientId string, clientSecret string, code string)
 	json.Unmarshal(body, &accessTokenResponse)
 
 	fmt.Println(accessTokenResponse)
-	return accessTokenResponse["access_token"], nil
+	if token, ok := accessTokenResponse["access_token"]; ok {
+		return token, nil
+	}
+
+	return "", errors.New("Error retrieving access token")
 }
 
 func (git Git) GetUserID(accessToken string) (int, error) {
@@ -117,7 +120,7 @@ func (git Git) GetUserID(accessToken string) (int, error) {
 	var m map[string]interface{}
 	json.Unmarshal(b, &m)
 	if _, ok := m["id"]; ok {
-		return m["id"].(int), nil
+		return m["id"].(float64), nil
 	}
 	return 0, fmt.Errorf("Couldn't unmarshal ID, json was:\n%v\nUrl:%v", string(b), url)
 }
