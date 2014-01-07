@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -29,7 +30,7 @@ func init() {
 	http.HandleFunc("/builds", buildsHandler)
 	http.HandleFunc("/build_output", buildOutputHandler)
 	http.HandleFunc("/build_output_raw", buildOutputRawHandler)
-	http.HandleFunc("/github_callback", githubCallbackHandler)
+	http.HandleFunc("/github_callback", githubLoginHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/add_repository", addRepositoryHandler)
 
@@ -56,10 +57,18 @@ func serveFile(filename string) {
 	})
 }
 
-func authenticated(r *http.Request) (*http.Cookie, bool) {
-	cookie, err := r.Cookie("github_access_token")
-	if err != nil {
-		return nil, false
+func currentAccount(r *http.Request) *Account {
+	account_id, _ := r.Cookie("account_id")
+	token, _ := r.Cookie("token")
+
+	if account_id == nil || token == nil {
+		return nil
 	}
-	return cookie, true
+
+	id, _ := strconv.Atoi(account_id.Value)
+	if database.LoginExists(id, token.Value) {
+		account := database.FindAccountById(id)
+		return account
+	}
+	return nil
 }

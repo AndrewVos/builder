@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 )
@@ -115,14 +116,19 @@ func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
 	formValues.Set("owner", "RepoOwnerrr")
 	formValues.Set("repository", "RailsTurboLinks")
 
+	fakeDatabase.FindAccountByIdToReturn = &Account{
+		GithubUserId: 3232,
+		AccessToken:  "sdfwef",
+	}
+
 	r, _ := http.NewRequest("", "", nil)
+	r.AddCookie(&http.Cookie{Name: "account_id", Value: "123"})
+	r.AddCookie(&http.Cookie{Name: "token", Value: "nothing"})
 	r.PostForm = formValues
-	r.AddCookie(&http.Cookie{Name: "github_access_token", Value: "somethingsomething"})
 	addRepositoryHandler(nil, r)
-	fakeGit := git.(*FakeGit)
 
 	expectedValues := map[string]interface{}{
-		"accessToken": "somethingsomething",
+		"accessToken": "sdfwef",
 		"owner":       "RepoOwnerrr",
 		"repository":  "RailsTurboLinks",
 	}
@@ -141,5 +147,46 @@ func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
 	}
 	if fakeDatabase.GithubBuild.Repository != expectedValues["repository"] {
 		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.GithubBuild.AccessToken)
+	}
+}
+
+func TestGithubLoginHandlerCreatesNewAccount(t *testing.T) {
+	resetFakeDatabase()
+	resetFakeGit()
+	fakeGit.AccessTokenToReturn = "some-access-token-123"
+	fakeGit.UserIdToReturn = 56733
+	fakeDatabase.LoginToReturn = &Login{AccountId: 121212, Token: "tokennn"}
+
+	r, _ := http.NewRequest("GET", "http://bla.com/?code=QUERY_CODE", nil)
+	w := httptest.NewRecorder()
+	githubLoginHandler(w, r)
+	if fakeDatabase.CreatedAccount == nil {
+		t.Fatal("Expected an account to be created")
+	}
+	if fakeDatabase.CreatedAccount.GithubUserId != 56733 {
+		t.Fatalf("Github user ID wasn't stored")
+	}
+	if fakeDatabase.CreatedAccount.AccessToken != "some-access-token-123" {
+		t.Fatalf("Access Token wasn't stored")
+	}
+}
+
+func TestGithubLoginHandlerSetsCookieWithValidLogin(t *testing.T) {
+	resetFakeDatabase()
+	resetFakeGit()
+	fakeDatabase.LoginToReturn = &Login{AccountId: 121212, Token: "tokennn"}
+
+	r, _ := http.NewRequest("GET", "http://bla.com/?code=QUERY_CODE", nil)
+	w := httptest.NewRecorder()
+	githubLoginHandler(w, r)
+
+	fakeGit.AccessTokenToReturn = "some-access-token-123"
+	fakeGit.UserIdToReturn = 56733
+
+	if w.Header()["Set-Cookie"][0] != "account_id=121212" {
+		t.Errorf("Cookie account_id wasn't set properly")
+	}
+	if w.Header()["Set-Cookie"][1] != "token=tokennn" {
+		t.Errorf("Cookie token wasn't set properly")
 	}
 }

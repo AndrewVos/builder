@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"github.com/eaigner/jet"
 	_ "github.com/lib/pq"
@@ -216,4 +218,136 @@ func (p *PostgresDatabase) IncompleteBuilds() []*Build {
 	}
 
 	return builds
+}
+
+func (p *PostgresDatabase) FindAccountById(id int) *Account {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	var account *Account
+	err = db.Query(`
+    SELECT * FROM accounts
+      WHERE id = $1
+  `, id).Rows(&account)
+
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	return account
+}
+
+func (p *PostgresDatabase) FindAccountByGithubUserId(id int) *Account {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	var account *Account
+	err = db.Query(`
+    SELECT * FROM accounts
+      WHERE github_user_id = $1
+  `, id).Rows(&account)
+
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	return account
+}
+
+func (p *PostgresDatabase) CreateAccount(account *Account) error {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	if found := p.FindAccountByGithubUserId(account.GithubUserId); found != nil {
+		err = db.Query(`
+    UPDATE accounts
+      SET
+        (access_token) = ($1)
+      WHERE id = $2
+    `, account.AccessToken, found.Id).Run()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		account.Id = found.Id
+	} else {
+		var id int
+		err = db.Query(`
+      INSERT INTO accounts (github_user_id, access_token)
+      VALUES ($1, $2)
+      RETURNING (id)
+    `, account.GithubUserId, account.AccessToken).Rows(&id)
+
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		account.Id = id
+	}
+
+	return nil
+}
+
+func (p *PostgresDatabase) CreateLoginForAccount(account *Account) (*Login, error) {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	b := make([]byte, 50)
+	rand.Read(b)
+	encoder := base64.URLEncoding
+	token := make([]byte, encoder.EncodedLen(len(b)))
+	encoder.Encode(token, b)
+	t := fmt.Sprintf("%s", token)
+
+	var id int
+	err = db.Query(`
+      INSERT INTO logins (account_id, token)
+      VALUES ($1, $2)
+      RETURNING (id)
+    `, account.Id, t).Rows(&id)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return &Login{
+		Id:        id,
+		AccountId: account.Id,
+		Token:     t,
+	}, nil
+}
+
+func (p *PostgresDatabase) LoginExists(accountId int, token string) bool {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	var count int
+	err = db.Query(`
+      SELECT COUNT (*) FROM logins
+      WHERE account_id = $1
+      AND token = $1
+    `, accountId, token).Rows(&count)
+
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	return count == 1
 }

@@ -8,4 +8,3 @@ CREATE TABLE github_builds(
 
 -- +goose Down
 DROP TABLE github_builds;
-

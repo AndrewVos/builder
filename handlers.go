@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,11 +45,11 @@ func (builder *Builder) LaunchBuild(owner string, repo string, ref string, sha s
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	_, loggedIn := authenticated(r)
+	account := currentAccount(r)
 
 	context := map[string]interface{}{
 		"clientID": configuration.GithubClientID,
-		"loggedIn": loggedIn,
+		"loggedIn": (account != nil),
 	}
 	body := mustache.RenderFile("views/home.mustache", context)
 	w.Write([]byte(body))
@@ -178,13 +177,13 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, loggedIn := authenticated(r)
-	if loggedIn {
-		accessToken := cookie.Value
+	account := currentAccount(r)
+
+	if account != nil {
 		owner := r.PostFormValue("owner")
 		repository := r.PostFormValue("repository")
 
-		err := git.CreateHooks(accessToken, owner, repository)
+		err := git.CreateHooks(account.AccessToken, owner, repository)
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(500)
@@ -192,7 +191,7 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = database.SaveGithubBuild(&GithubBuild{
-			AccessToken: accessToken,
+			AccessToken: account.AccessToken,
 			Owner:       owner,
 			Repository:  repository,
 		})
@@ -204,30 +203,38 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func githubCallbackHandler(w http.ResponseWriter, r *http.Request) {
+func githubLoginHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 
-	body, _ := json.Marshal(map[string]interface{}{
-		"client_id":     configuration.GithubClientID,
-		"client_secret": configuration.GithubClientSecret,
-		"code":          code,
-	})
-
-	client := &http.Client{}
-	request, _ := http.NewRequest("POST", "https://github.com/login/oauth/access_token", bytes.NewReader(body))
-
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Accept", "application/json")
-	response, err := client.Do(request)
+	accessToken, err := git.GetAccessToken(
+		configuration.GithubClientID,
+		configuration.GithubClientSecret,
+		code)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 
-	defer response.Body.Close()
-	body, _ = ioutil.ReadAll(response.Body)
-	var accessTokenResponse map[string]string
-	json.Unmarshal(body, &accessTokenResponse)
-	http.SetCookie(w, &http.Cookie{Name: "github_access_token", Value: accessTokenResponse["access_token"]})
+	githubUserID, err := git.GetUserID(accessToken)
+	if err != nil {
+		return
+	}
+
+	account := &Account{
+		GithubUserId: githubUserID,
+		AccessToken:  accessToken,
+	}
+
+	err = database.CreateAccount(account)
+	if err != nil {
+		return
+	}
+
+	login, err := database.CreateLoginForAccount(account)
+	if err != nil {
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{Name: "account_id", Value: strconv.Itoa(login.AccountId)})
+	http.SetCookie(w, &http.Cookie{Name: "token", Value: login.Token})
 	http.Redirect(w, r, "/", 302)
 }

@@ -10,15 +10,24 @@ var fakeGit *FakeGit
 var fakeDatabase *FakeDatabase
 
 func init() {
-	fakeGit = &FakeGit{}
-	git = fakeGit
+	resetFakeGit()
+	resetFakeDatabase()
+}
 
+func resetFakeDatabase() {
 	fakeDatabase = &FakeDatabase{}
 	database = fakeDatabase
 }
 
+func resetFakeGit() {
+	fakeGit = &FakeGit{}
+	git = fakeGit
+}
+
 type FakeGit struct {
 	FakeRepo              string
+	UserIdToReturn        int
+	AccessTokenToReturn   string
 	createHooksParameters map[string]interface{}
 }
 
@@ -41,8 +50,19 @@ func (g *FakeGit) CreateHooks(accessToken string, owner string, repo string) err
 	return nil
 }
 
+func (g *FakeGit) GetAccessToken(clientId string, clientSecret string, code string) (string, error) {
+	return g.AccessTokenToReturn, nil
+}
+
+func (g *FakeGit) GetUserID(accessToken string) (int, error) {
+	return g.UserIdToReturn, nil
+}
+
 type FakeDatabase struct {
-	GithubBuild *GithubBuild
+	GithubBuild             *GithubBuild
+	CreatedAccount          *Account
+	LoginToReturn           *Login
+	FindAccountByIdToReturn *Account
 }
 
 func (f *FakeDatabase) SaveGithubBuild(ghb *GithubBuild) error {
@@ -77,4 +97,25 @@ func (f *FakeDatabase) FindGithubBuild(owner string, repository string) *GithubB
 
 func (f *FakeDatabase) IncompleteBuilds() []*Build {
 	return nil
+}
+
+func (f *FakeDatabase) FindAccountById(id int) *Account {
+	return f.FindAccountByIdToReturn
+}
+
+func (f *FakeDatabase) FindAccountByGithubUserId(id int) *Account {
+	return nil
+}
+
+func (f *FakeDatabase) CreateAccount(account *Account) error {
+	f.CreatedAccount = account
+	return nil
+}
+
+func (f *FakeDatabase) CreateLoginForAccount(account *Account) (*Login, error) {
+	return f.LoginToReturn, nil
+}
+
+func (f *FakeDatabase) LoginExists(accountId int, token string) bool {
+	return true
 }
