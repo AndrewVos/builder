@@ -212,6 +212,7 @@ func githubLoginHandler(w http.ResponseWriter, r *http.Request) {
 		configuration.GithubClientSecret,
 		code)
 	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
@@ -219,6 +220,7 @@ func githubLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	githubUserID, err := git.GetUserID(accessToken)
 	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
