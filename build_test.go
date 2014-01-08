@@ -14,13 +14,13 @@ func cleanDataDirectory() {
 
 func TestBuildUrl(t *testing.T) {
 	database := &PostgresDatabase{}
-	githubBuild := &GithubBuild{Owner: "bla", Repository: "repooo"}
-	database.SaveGithubBuild(githubBuild)
+	repository := &Repository{Owner: "bla", Repository: "repooo"}
+	database.SaveRepository(repository)
 	build := &Build{
 		Owner:      "bla",
 		Repository: "repooo",
 	}
-	database.CreateBuild(githubBuild, build)
+	database.CreateBuild(repository, build)
 	expected := "http://localhost:1212/build_output?id=" + strconv.Itoa(build.Id)
 	if build.Url != expected {
 		t.Errorf("Expected:\n%v\nGot:\n%v\n", expected, build.Url)
@@ -34,13 +34,13 @@ func TestBuildUrlPort80(t *testing.T) {
 	configuration.Port = "80"
 	defer func() { configuration.Port = oldPort }()
 
-	githubBuild := &GithubBuild{Owner: "bla", Repository: "repooo"}
-	database.SaveGithubBuild(githubBuild)
+	repository := &Repository{Owner: "bla", Repository: "repooo"}
+	database.SaveRepository(repository)
 	build := &Build{
 		Owner:      "bla",
 		Repository: "repooo",
 	}
-	database.CreateBuild(githubBuild, build)
+	database.CreateBuild(repository, build)
 	expected := "http://localhost/build_output?id=" + strconv.Itoa(build.Id)
 	if build.Url != expected {
 		t.Errorf("Expected:\n%v\nGot:\n%v\n", expected, build.Url)
@@ -51,10 +51,8 @@ func TestFailingBuild(t *testing.T) {
 	defer cleanDataDirectory()
 
 	fakeGit.FakeRepo = "red"
-	ghb := &GithubBuild{Owner: "some-owner", Repository: "some-repo"}
-	fakeDatabase.GithubBuild = ghb
-
-	database.SaveGithubBuild(ghb)
+	repository := &Repository{Owner: "some-owner", Repository: "some-repo"}
+	fakeDatabase.SavedRepository = repository
 
 	build := &Build{Owner: "some-owner", Repository: "some-repo"}
 
@@ -80,8 +78,8 @@ func TestPassingBuild(t *testing.T) {
 	defer cleanDataDirectory()
 
 	fakeGit.FakeRepo = "green"
-	ghb := &GithubBuild{Owner: "some-owner", Repository: "some-repo"}
-	fakeDatabase.GithubBuild = ghb
+	repository := &Repository{Owner: "some-owner", Repository: "some-repo"}
+	fakeDatabase.SavedRepository = repository
 	build := &Build{Owner: "some-owner", Repository: "some-repo"}
 
 	build.start()
@@ -106,8 +104,8 @@ func TestOutputEnvirons(t *testing.T) {
 	defer cleanDataDirectory()
 
 	fakeGit.FakeRepo = "environs"
-	ghb := &GithubBuild{Owner: "some-owner", Repository: "some-repo"}
-	fakeDatabase.GithubBuild = ghb
+	repository := &Repository{Owner: "some-owner", Repository: "some-repo"}
+	fakeDatabase.SavedRepository = repository
 	build := &Build{
 		Url:        " sdsdfsd",
 		Id:         23,

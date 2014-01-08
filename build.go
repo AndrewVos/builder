@@ -12,18 +12,18 @@ import (
 )
 
 type Build struct {
-	Id            int
-	GithubBuildId int
-	Url           string
-	Owner         string
-	Repository    string
-	Ref           string
-	Sha           string
-	Complete      bool
-	Success       bool
-	Result        string
-	GithubUrl     string
-	Commits       []Commit
+	Id           int
+	RepositoryId int
+	Url          string
+	Owner        string
+	Repository   string
+	Ref          string
+	Sha          string
+	Complete     bool
+	Success      bool
+	Result       string
+	GithubUrl    string
+	Commits      []Commit
 }
 
 type Commit struct {
@@ -63,11 +63,11 @@ func (build *Build) start() {
 }
 
 func (build *Build) checkout(output *os.File) error {
-	githubBuild := database.FindGithubBuild(build.Owner, build.Repository)
-	if githubBuild == nil {
+	repository := database.FindRepository(build.Owner, build.Repository)
+	if repository == nil {
 		return errors.New("Don't have access to build this project")
 	}
-	url := "https://" + githubBuild.AccessToken + "@github.com/" + build.Owner + "/" + build.Repository
+	url := "https://" + repository.AccessToken + "@github.com/" + build.Owner + "/" + build.Repository
 
 	err := git.Retrieve(output, url, build.SourcePath(), build.Ref, build.Sha)
 	if err != nil {

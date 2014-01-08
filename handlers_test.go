@@ -111,7 +111,7 @@ func TestPullRequestHandlerLaunchesBuildWithCorrectValues(t *testing.T) {
 	})
 }
 
-func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
+func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 	formValues := url.Values{}
 	formValues.Set("owner", "RepoOwnerrr")
 	formValues.Set("repository", "RailsTurboLinks")
@@ -139,14 +139,14 @@ func TestAddRepositoryHandlerCreatesHooksAndGithubBuild(t *testing.T) {
 		}
 	}
 
-	if fakeDatabase.GithubBuild.AccessToken != expectedValues["accessToken"] {
-		t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fakeDatabase.GithubBuild.AccessToken)
+	if fakeDatabase.SavedRepository.AccessToken != expectedValues["accessToken"] {
+		t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fakeDatabase.SavedRepository.AccessToken)
 	}
-	if fakeDatabase.GithubBuild.Owner != expectedValues["owner"] {
-		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakeDatabase.GithubBuild.AccessToken)
+	if fakeDatabase.SavedRepository.Owner != expectedValues["owner"] {
+		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakeDatabase.SavedRepository.AccessToken)
 	}
-	if fakeDatabase.GithubBuild.Repository != expectedValues["repository"] {
-		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.GithubBuild.AccessToken)
+	if fakeDatabase.SavedRepository.Repository != expectedValues["repository"] {
+		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.SavedRepository.AccessToken)
 	}
 }
 

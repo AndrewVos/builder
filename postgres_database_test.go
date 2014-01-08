@@ -6,7 +6,7 @@ import (
 
 func createCleanPostgresDatabase() *PostgresDatabase {
 	db, _ := connect()
-	db.Query("DELETE FROM github_builds").Run()
+	db.Query("DELETE FROM repositories").Run()
 	db.Query("DELETE FROM builds").Run()
 	db.Query("DELETE FROM commits").Run()
 	db.Query("DELETE FROM accounts").Run()
@@ -17,8 +17,8 @@ func createCleanPostgresDatabase() *PostgresDatabase {
 func TestAllBuildsLoadsCommits(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
-	ghb := &GithubBuild{Owner: "ownerrr", Repository: "repo1"}
-	db.SaveGithubBuild(ghb)
+	repository := &Repository{Owner: "ownerrr", Repository: "repo1"}
+	db.SaveRepository(repository)
 
 	commits := []Commit{
 		Commit{Sha: "csdkl22323", Message: "hellooo", Url: "something.com"},
@@ -26,7 +26,7 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 	}
 
 	build := &Build{Owner: "ownerrr", Repository: "repo1", Commits: commits}
-	db.CreateBuild(ghb, build)
+	db.CreateBuild(repository, build)
 
 	build = db.AllBuilds()[0]
 	if len(build.Commits) != len(commits) {
@@ -42,37 +42,37 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 	}
 }
 
-func TestFindGithubBuild(t *testing.T) {
+func TestFindRepository(t *testing.T) {
 	db := createCleanPostgresDatabase()
-	b1 := &GithubBuild{Owner: "ownerrr", Repository: "repo1"}
-	b2 := &GithubBuild{Owner: "erm", Repository: "repo2"}
-	db.SaveGithubBuild(b1)
-	db.SaveGithubBuild(b2)
+	b1 := &Repository{Owner: "ownerrr", Repository: "repo1"}
+	b2 := &Repository{Owner: "erm", Repository: "repo2"}
+	db.SaveRepository(b1)
+	db.SaveRepository(b2)
 
-	ghb := db.FindGithubBuild("erm", "repo2")
+	repository := db.FindRepository("erm", "repo2")
 
-	if ghb == nil || ghb.Owner != "erm" || ghb.Repository != "repo2" {
-		t.Errorf("Expected to find github build:\n%+v\nActual:\n%+v\n", b2, ghb)
+	if repository == nil || repository.Owner != "erm" || repository.Repository != "repo2" {
+		t.Errorf("Expected to find repository:\n%+v\nActual:\n%+v\n", b2, repository)
 	}
 
-	ghb = db.FindGithubBuild("losdsds", "sd")
-	if ghb != nil {
-		t.Errorf("Expected not to find a github build, but found:\n%+v\n", ghb)
+	repository = db.FindRepository("losdsds", "sd")
+	if repository != nil {
+		t.Errorf("Expected not to find a repository, but found:\n%+v\n", repository)
 	}
 }
 
 func TestIncompleteBuilds(t *testing.T) {
 	db := createCleanPostgresDatabase()
-	ghb := &GithubBuild{Owner: "ownerrr", Repository: "repo1"}
-	db.SaveGithubBuild(ghb)
+	repository := &Repository{Owner: "ownerrr", Repository: "repo1"}
+	db.SaveRepository(repository)
 
 	build := &Build{Owner: "ownerrr", Repository: "repo1"}
-	db.CreateBuild(ghb, build)
+	db.CreateBuild(repository, build)
 	build.Complete = true
 	db.SaveBuild(build)
 
 	build = &Build{Owner: "ownerrr", Repository: "repo1"}
-	db.CreateBuild(ghb, build)
+	db.CreateBuild(repository, build)
 	build.Complete = false
 	db.SaveBuild(build)
 

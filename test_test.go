@@ -59,14 +59,14 @@ func (g *FakeGit) GetUserID(accessToken string) (int, error) {
 }
 
 type FakeDatabase struct {
-	GithubBuild             *GithubBuild
+	SavedRepository         *Repository
 	CreatedAccount          *Account
 	LoginToReturn           *Login
 	FindAccountByIdToReturn *Account
 }
 
-func (f *FakeDatabase) SaveGithubBuild(ghb *GithubBuild) error {
-	f.GithubBuild = ghb
+func (f *FakeDatabase) SaveRepository(repository *Repository) error {
+	f.SavedRepository = repository
 	return nil
 }
 
@@ -82,14 +82,14 @@ func (f *FakeDatabase) AllBuilds() []*Build {
 	return nil
 }
 
-func (f *FakeDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) error {
+func (f *FakeDatabase) CreateBuild(githubBuild *Repository, build *Build) error {
 	return nil
 }
 
-func (f *FakeDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {
-	if f.GithubBuild != nil {
-		if f.GithubBuild.Owner == owner && f.GithubBuild.Repository == repository {
-			return f.GithubBuild
+func (f *FakeDatabase) FindRepository(owner string, repository string) *Repository {
+	if f.SavedRepository != nil {
+		if f.SavedRepository.Owner == owner && f.SavedRepository.Repository == repository {
+			return f.SavedRepository
 		}
 	}
 	return nil

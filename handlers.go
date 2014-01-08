@@ -23,8 +23,8 @@ type Builder struct {
 }
 
 func (builder *Builder) LaunchBuild(owner string, repo string, ref string, sha string, githubURL string, commits []Commit) error {
-	githubBuild := database.FindGithubBuild(owner, repo)
-	if githubBuild == nil {
+	repository := database.FindRepository(owner, repo)
+	if repository == nil {
 		return errors.New(fmt.Sprintf("Couldn't find access token to build %v/%v\n", owner, repo))
 	}
 
@@ -36,7 +36,7 @@ func (builder *Builder) LaunchBuild(owner string, repo string, ref string, sha s
 		GithubUrl:  githubURL,
 		Commits:    commits,
 	}
-	err := database.CreateBuild(githubBuild, build)
+	err := database.CreateBuild(repository, build)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = database.SaveGithubBuild(&GithubBuild{
+		err = database.SaveRepository(&Repository{
 			AccessToken: account.AccessToken,
 			Owner:       owner,
 			Repository:  repository,

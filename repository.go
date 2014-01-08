@@ -1,6 +1,6 @@
 package main
 
-type GithubBuild struct {
+type Repository struct {
 	Id          int
 	AccessToken string
 	Owner       string

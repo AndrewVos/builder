@@ -28,16 +28,16 @@ func connect() (*jet.Db, error) {
 type PostgresDatabase struct {
 }
 
-func (p *PostgresDatabase) SaveGithubBuild(ghb *GithubBuild) error {
+func (p *PostgresDatabase) SaveRepository(repository *Repository) error {
 	db, err := connect()
 	if err != nil {
 		return err
 	}
 
 	err = db.Query(`
-    INSERT INTO github_builds (access_token, owner, repository)
+    INSERT INTO repositories (access_token, owner, repository)
       VALUES ($1, $2, $3)
-    `, ghb.AccessToken, ghb.Owner, ghb.Repository).Run()
+    `, repository.AccessToken, repository.Owner, repository.Repository).Run()
 
 	if err != nil {
 		log.Println(err)
@@ -135,7 +135,7 @@ func (p *PostgresDatabase) AllBuilds() []*Build {
 	return builds
 }
 
-func (p *PostgresDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) error {
+func (p *PostgresDatabase) CreateBuild(repository *Repository, build *Build) error {
 	db, err := connect()
 	if err != nil {
 		return err
@@ -143,10 +143,10 @@ func (p *PostgresDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) e
 
 	var m []int
 	err = db.Query(`
-    INSERT INTO builds (github_build_id)
+    INSERT INTO builds (repository_id)
       VALUES ($1)
       RETURNING (id)
-    `, githubBuild.Id,
+    `, repository.Id,
 	).Rows(&m)
 
 	if err != nil {
@@ -173,30 +173,30 @@ func (p *PostgresDatabase) CreateBuild(githubBuild *GithubBuild, build *Build) e
 	return nil
 }
 
-func (p *PostgresDatabase) FindGithubBuild(owner string, repository string) *GithubBuild {
+func (p *PostgresDatabase) FindRepository(owner string, name string) *Repository {
 	db, err := connect()
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 
-	var builds []*GithubBuild
+	var repositories []*Repository
 	err = db.Query(`
-    SELECT * FROM github_builds
+    SELECT * FROM repositories
       WHERE   owner      = $1
       AND     repository = $2
-    `, owner, repository).Rows(&builds)
+    `, owner, name).Rows(&repositories)
 
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 
-	if len(builds) == 0 {
+	if len(repositories) == 0 {
 		return nil
 	}
 
-	return builds[0]
+	return repositories[0]
 }
 
 func (p *PostgresDatabase) IncompleteBuilds() []*Build {
