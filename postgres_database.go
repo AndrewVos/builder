@@ -253,6 +253,10 @@ func (p *PostgresDatabase) FindAccountById(id int) *Account {
 
 	account.Repositories = repositories
 
+	for _, repository := range repositories {
+		repository.Account = account
+	}
+
 	return account
 }
 

@@ -121,6 +121,9 @@ func TestAddRepositoryToAccount(t *testing.T) {
 	if len(foundAccount.Repositories) == 0 {
 		t.Fatalf("Repository wasn't added to account")
 	}
+	if foundAccount.Repositories[0].Account.Id != account.Id {
+		t.Errorf("Repository should have an account")
+	}
 	if foundAccount.Repositories[0].Owner != "eer" {
 		t.Errorf("Owner was %v", foundAccount.Repositories[0].Owner)
 	}
