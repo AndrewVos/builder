@@ -196,7 +196,9 @@ func (p *PostgresDatabase) FindRepository(owner string, name string) *Repository
 		return nil
 	}
 
-	return repositories[0]
+	repository := repositories[0]
+	repository.Account = p.FindAccountById(repository.AccountId)
+	return repository
 }
 
 func (p *PostgresDatabase) IncompleteBuilds() []*Build {

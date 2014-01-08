@@ -47,7 +47,7 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 func TestFindRepository(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
-	account := &Account{}
+	account := &Account{Id: 1267}
 	db.CreateAccount(account)
 
 	b1 := &Repository{Owner: "ownerrr", Repository: "repo1"}
@@ -59,6 +59,9 @@ func TestFindRepository(t *testing.T) {
 
 	if repository == nil || repository.Owner != "erm" || repository.Repository != "repo2" {
 		t.Errorf("Expected to find repository:\n%+v\nActual:\n%+v\n", b2, repository)
+	}
+	if repository.Account == nil || repository.Account.Id != account.Id {
+		t.Errorf("Repository.Account should be populated")
 	}
 
 	repository = db.FindRepository("losdsds", "sd")
