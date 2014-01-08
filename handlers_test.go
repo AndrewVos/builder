@@ -117,8 +117,8 @@ func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 	formValues.Set("repository", "RailsTurboLinks")
 
 	fakeDatabase.FindAccountByIdToReturn = &Account{
-		GithubUserId: 3232,
-		AccessToken:  "sdfwef",
+		Id:          3232,
+		AccessToken: "sdfwef",
 	}
 
 	r, _ := http.NewRequest("", "", nil)
@@ -139,14 +139,11 @@ func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 		}
 	}
 
-	if fakeDatabase.SavedRepository.AccessToken != expectedValues["accessToken"] {
-		t.Errorf("Expected Access Token to be %q, but was %q\n", expectedValues["accessToken"], fakeDatabase.SavedRepository.AccessToken)
-	}
 	if fakeDatabase.SavedRepository.Owner != expectedValues["owner"] {
-		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakeDatabase.SavedRepository.AccessToken)
+		t.Errorf("Expected Owner to be %q, but was %q\n", expectedValues["owner"], fakeDatabase.SavedRepository.Owner)
 	}
 	if fakeDatabase.SavedRepository.Repository != expectedValues["repository"] {
-		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.SavedRepository.AccessToken)
+		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.SavedRepository.Repository)
 	}
 }
 
@@ -163,7 +160,7 @@ func TestGithubLoginHandlerCreatesNewAccount(t *testing.T) {
 	if fakeDatabase.CreatedAccount == nil {
 		t.Fatal("Expected an account to be created")
 	}
-	if fakeDatabase.CreatedAccount.GithubUserId != 56733 {
+	if fakeDatabase.CreatedAccount.Id != 56733 {
 		t.Fatalf("Github user ID wasn't stored")
 	}
 	if fakeDatabase.CreatedAccount.AccessToken != "some-access-token-123" {
@@ -178,13 +175,14 @@ func TestGithubLoginHandlerSetsCookieWithValidLogin(t *testing.T) {
 
 	r, _ := http.NewRequest("GET", "http://bla.com/?code=QUERY_CODE", nil)
 	w := httptest.NewRecorder()
-	githubLoginHandler(w, r)
 
 	fakeGit.AccessTokenToReturn = "some-access-token-123"
 	fakeGit.UserIdToReturn = 56733
 
-	if w.Header()["Set-Cookie"][0] != "account_id=121212" {
-		t.Errorf("Cookie account_id wasn't set properly")
+	githubLoginHandler(w, r)
+
+	if w.Header()["Set-Cookie"][0] != "account_id=56733" {
+		t.Errorf("Cookie account_id wasn't set properly, got %v", w.Header()["Set-Cookie"][0])
 	}
 	if w.Header()["Set-Cookie"][1] != "token=tokennn" {
 		t.Errorf("Cookie token wasn't set properly")

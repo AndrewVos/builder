@@ -65,7 +65,7 @@ type FakeDatabase struct {
 	FindAccountByIdToReturn *Account
 }
 
-func (f *FakeDatabase) SaveRepository(repository *Repository) error {
+func (f *FakeDatabase) AddRepositoryToAccount(account *Account, repository *Repository) error {
 	f.SavedRepository = repository
 	return nil
 }
@@ -101,10 +101,6 @@ func (f *FakeDatabase) IncompleteBuilds() []*Build {
 
 func (f *FakeDatabase) FindAccountById(id int) *Account {
 	return f.FindAccountByIdToReturn
-}
-
-func (f *FakeDatabase) FindAccountByGithubUserId(id int) *Account {
-	return nil
 }
 
 func (f *FakeDatabase) CreateAccount(account *Account) error {

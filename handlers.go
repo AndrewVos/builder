@@ -191,10 +191,9 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = database.SaveRepository(&Repository{
-			AccessToken: account.AccessToken,
-			Owner:       owner,
-			Repository:  repository,
+		err = database.AddRepositoryToAccount(account, &Repository{
+			Owner:      owner,
+			Repository: repository,
 		})
 		if err != nil {
 			fmt.Println(err)
@@ -223,8 +222,8 @@ func githubLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	account := &Account{
-		GithubUserId: githubUserID,
-		AccessToken:  accessToken,
+		Id:          githubUserID,
+		AccessToken: accessToken,
 	}
 
 	err = database.CreateAccount(account)
@@ -237,7 +236,7 @@ func githubLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{Name: "account_id", Value: strconv.Itoa(login.AccountId)})
+	http.SetCookie(w, &http.Cookie{Name: "account_id", Value: strconv.Itoa(githubUserID)})
 	http.SetCookie(w, &http.Cookie{Name: "token", Value: login.Token})
 	http.Redirect(w, r, "/", 302)
 }

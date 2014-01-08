@@ -17,8 +17,10 @@ func createCleanPostgresDatabase() *PostgresDatabase {
 func TestAllBuildsLoadsCommits(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
+	account := &Account{}
+	db.CreateAccount(account)
 	repository := &Repository{Owner: "ownerrr", Repository: "repo1"}
-	db.SaveRepository(repository)
+	db.AddRepositoryToAccount(account, repository)
 
 	commits := []Commit{
 		Commit{Sha: "csdkl22323", Message: "hellooo", Url: "something.com"},
@@ -44,10 +46,14 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 
 func TestFindRepository(t *testing.T) {
 	db := createCleanPostgresDatabase()
+
+	account := &Account{}
+	db.CreateAccount(account)
+
 	b1 := &Repository{Owner: "ownerrr", Repository: "repo1"}
 	b2 := &Repository{Owner: "erm", Repository: "repo2"}
-	db.SaveRepository(b1)
-	db.SaveRepository(b2)
+	db.AddRepositoryToAccount(account, b1)
+	db.AddRepositoryToAccount(account, b2)
 
 	repository := db.FindRepository("erm", "repo2")
 
@@ -63,8 +69,10 @@ func TestFindRepository(t *testing.T) {
 
 func TestIncompleteBuilds(t *testing.T) {
 	db := createCleanPostgresDatabase()
+	account := &Account{}
+	db.CreateAccount(account)
 	repository := &Repository{Owner: "ownerrr", Repository: "repo1"}
-	db.SaveRepository(repository)
+	db.AddRepositoryToAccount(account, repository)
 
 	build := &Build{Owner: "ownerrr", Repository: "repo1"}
 	db.CreateBuild(repository, build)
@@ -85,55 +93,51 @@ func TestIncompleteBuilds(t *testing.T) {
 func TestCreateAndFindAccountById(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
-	account := &Account{GithubUserId: 2455252, AccessToken: "23mf23f22n3kl2n3nkl2n3lnl2n3ln3lnl"}
+	account := &Account{Id: 2455252, AccessToken: "23mf23f22n3kl2n3nkl2n3lnl2n3ln3lnl"}
 	db.CreateAccount(account)
 
-	account = db.FindAccountById(account.Id)
-	if account == nil {
+	found := db.FindAccountById(2455252)
+	if found == nil {
 		t.Fatalf("Account wasn't found")
 	}
-	if account.Id != account.Id || account.AccessToken != "23mf23f22n3kl2n3nkl2n3lnl2n3ln3lnl" {
-		t.Errorf("Expected account to be found")
+	if found.Id != account.Id {
+		t.Errorf("Account id is wrong")
+	}
+	if found.AccessToken != "23mf23f22n3kl2n3nkl2n3lnl2n3ln3lnl" {
+		t.Errorf("Account AccessToken wasn't stored")
 	}
 }
 
-func TestCreateAndFindAccountByGithubUserId(t *testing.T) {
+func TestAddRepositoryToAccount(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
-	account := &Account{
-		GithubUserId: 2455252,
-		AccessToken:  "23mf23f22n3kl2n3nkl2n3lnl2n3ln3lnl",
-	}
-
+	account := &Account{Id: 595, AccessToken: "23mf23f22n3kl2n3nkl2n3lnl2n3ln3lnl"}
 	db.CreateAccount(account)
-	if account.Id == 0 {
-		t.Fatalf("Account id should have been auto-incremented")
+
+	repository := &Repository{Owner: "eer", Repository: "somename"}
+	db.AddRepositoryToAccount(account, repository)
+
+	foundAccount := db.FindAccountById(595)
+	if len(foundAccount.Repositories) == 0 {
+		t.Fatalf("Repository wasn't added to account")
 	}
-
-	account = db.FindAccountByGithubUserId(account.GithubUserId)
-
-	if account == nil {
-		t.Fatalf("Account wasn't found")
+	if foundAccount.Repositories[0].Owner != "eer" {
+		t.Errorf("Owner was %v", foundAccount.Repositories[0].Owner)
 	}
-
-	if account.GithubUserId != 2455252 {
-		t.Errorf("Account GithubUserId wasn't stored")
-	}
-
-	if account.AccessToken != "23mf23f22n3kl2n3nkl2n3lnl2n3ln3lnl" {
-		t.Errorf("Account AccessToken wasn't stored")
+	if foundAccount.Repositories[0].Repository != "somename" {
+		t.Errorf("Name was %v", foundAccount.Repositories[0].Repository)
 	}
 }
 
 func TestCreateAccountUpdatesAccessToken(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
-	account1 := &Account{GithubUserId: 2455252, AccessToken: "ZZZZZZZZZZ"}
-	account2 := &Account{GithubUserId: 2455252, AccessToken: "AAAAAAAAAA"}
+	account1 := &Account{Id: 2455252, AccessToken: "ZZZZZZZZZZ"}
+	account2 := &Account{Id: 2455252, AccessToken: "AAAAAAAAAA"}
 	db.CreateAccount(account1)
 	db.CreateAccount(account2)
 
-	foundAccount := db.FindAccountByGithubUserId(2455252)
+	foundAccount := db.FindAccountById(2455252)
 
 	if foundAccount.Id != account1.Id {
 		t.Errorf("Expected account to not be created again")
@@ -147,7 +151,7 @@ func TestCreateAccountUpdatesAccessToken(t *testing.T) {
 func TestLoginExists(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
-	account := &Account{GithubUserId: 2455252, AccessToken: "5T"}
+	account := &Account{Id: 2455252, AccessToken: "5T"}
 	db.CreateAccount(account)
 
 	login, _ := db.CreateLoginForAccount(account)

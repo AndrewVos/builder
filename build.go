@@ -67,7 +67,7 @@ func (build *Build) checkout(output *os.File) error {
 	if repository == nil {
 		return errors.New("Don't have access to build this project")
 	}
-	url := "https://" + repository.AccessToken + "@github.com/" + build.Owner + "/" + build.Repository
+	url := "https://" + repository.Account.AccessToken + "@github.com/" + build.Owner + "/" + build.Repository
 
 	err := git.Retrieve(output, url, build.SourcePath(), build.Ref, build.Sha)
 	if err != nil {

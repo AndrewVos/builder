@@ -28,16 +28,16 @@ func connect() (*jet.Db, error) {
 type PostgresDatabase struct {
 }
 
-func (p *PostgresDatabase) SaveRepository(repository *Repository) error {
+func (p *PostgresDatabase) AddRepositoryToAccount(account *Account, repository *Repository) error {
 	db, err := connect()
 	if err != nil {
 		return err
 	}
 
 	err = db.Query(`
-    INSERT INTO repositories (access_token, owner, repository)
+    INSERT INTO repositories (account_id, owner, repository)
       VALUES ($1, $2, $3)
-    `, repository.AccessToken, repository.Owner, repository.Repository).Run()
+    `, account.Id, repository.Owner, repository.Repository).Run()
 
 	if err != nil {
 		log.Println(err)
@@ -237,26 +237,22 @@ func (p *PostgresDatabase) FindAccountById(id int) *Account {
 		log.Println(err)
 		return nil
 	}
-	return account
-}
 
-func (p *PostgresDatabase) FindAccountByGithubUserId(id int) *Account {
-	db, err := connect()
-	if err != nil {
-		log.Println(err)
+	if account == nil {
 		return nil
 	}
 
-	var account *Account
+	var repositories []*Repository
 	err = db.Query(`
-    SELECT * FROM accounts
-      WHERE github_user_id = $1
-  `, id).Rows(&account)
-
+  SELECT * FROM repositories
+    WHERE account_id = $1
+  `, account.Id).Rows(&repositories)
 	if err != nil {
 		log.Println(err)
-		return nil
 	}
+
+	account.Repositories = repositories
+
 	return account
 }
 
@@ -267,7 +263,7 @@ func (p *PostgresDatabase) CreateAccount(account *Account) error {
 		return err
 	}
 
-	if found := p.FindAccountByGithubUserId(account.GithubUserId); found != nil {
+	if found := p.FindAccountById(account.Id); found != nil {
 		err = db.Query(`
     UPDATE accounts
       SET
@@ -275,23 +271,20 @@ func (p *PostgresDatabase) CreateAccount(account *Account) error {
       WHERE id = $2
     `, account.AccessToken, found.Id).Run()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Error updating account: ", err)
 			return err
 		}
 		account.Id = found.Id
 	} else {
-		var id int
 		err = db.Query(`
-      INSERT INTO accounts (github_user_id, access_token)
+      INSERT INTO accounts (id, access_token)
       VALUES ($1, $2)
-      RETURNING (id)
-    `, account.GithubUserId, account.AccessToken).Rows(&id)
+    `, account.Id, account.AccessToken).Run()
 
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Error creating account: ", err)
 			return err
 		}
-		account.Id = id
 	}
 
 	return nil

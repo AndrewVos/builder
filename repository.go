@@ -1,8 +1,9 @@
 package main
 
 type Repository struct {
-	Id          int
-	AccessToken string
-	Owner       string
-	Repository  string
+	Id         int
+	AccountId  int
+	Owner      string
+	Repository string
+	Account    *Account
 }

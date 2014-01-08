@@ -14,8 +14,10 @@ func cleanDataDirectory() {
 
 func TestBuildUrl(t *testing.T) {
 	database := &PostgresDatabase{}
+	account := &Account{}
+	database.CreateAccount(account)
 	repository := &Repository{Owner: "bla", Repository: "repooo"}
-	database.SaveRepository(repository)
+	database.AddRepositoryToAccount(account, repository)
 	build := &Build{
 		Owner:      "bla",
 		Repository: "repooo",
@@ -34,8 +36,10 @@ func TestBuildUrlPort80(t *testing.T) {
 	configuration.Port = "80"
 	defer func() { configuration.Port = oldPort }()
 
+	account := &Account{}
+	database.CreateAccount(account)
 	repository := &Repository{Owner: "bla", Repository: "repooo"}
-	database.SaveRepository(repository)
+	database.AddRepositoryToAccount(account, repository)
 	build := &Build{
 		Owner:      "bla",
 		Repository: "repooo",
@@ -51,7 +55,9 @@ func TestFailingBuild(t *testing.T) {
 	defer cleanDataDirectory()
 
 	fakeGit.FakeRepo = "red"
-	repository := &Repository{Owner: "some-owner", Repository: "some-repo"}
+	account := &Account{AccessToken: "sdsd"}
+	fakeDatabase.FindAccountByIdToReturn = account
+	repository := &Repository{Account: account, Owner: "some-owner", Repository: "some-repo"}
 	fakeDatabase.SavedRepository = repository
 
 	build := &Build{Owner: "some-owner", Repository: "some-repo"}
@@ -78,7 +84,9 @@ func TestPassingBuild(t *testing.T) {
 	defer cleanDataDirectory()
 
 	fakeGit.FakeRepo = "green"
-	repository := &Repository{Owner: "some-owner", Repository: "some-repo"}
+	account := &Account{AccessToken: "sdsd"}
+	fakeDatabase.FindAccountByIdToReturn = account
+	repository := &Repository{Account: account, Owner: "some-owner", Repository: "some-repo"}
 	fakeDatabase.SavedRepository = repository
 	build := &Build{Owner: "some-owner", Repository: "some-repo"}
 
@@ -104,7 +112,9 @@ func TestOutputEnvirons(t *testing.T) {
 	defer cleanDataDirectory()
 
 	fakeGit.FakeRepo = "environs"
-	repository := &Repository{Owner: "some-owner", Repository: "some-repo"}
+	account := &Account{AccessToken: "sdsd"}
+	fakeDatabase.FindAccountByIdToReturn = account
+	repository := &Repository{Account: account, Owner: "some-owner", Repository: "some-repo"}
 	fakeDatabase.SavedRepository = repository
 	build := &Build{
 		Url:        " sdsdfsd",
