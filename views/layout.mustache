@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <script src="/scripts/jquery-2.0.3.min.js"></script>
+    {{#js}}
+      <script src="/scripts/{{{name}}}"></script>
+    {{/js}}
+    <link rel="stylesheet" href="/styles/bootstrap.min.css">
+    <link rel="stylesheet" href="/styles/common.css">
+    {{#css}}
+    <link rel="stylesheet" href="/styles/{{{name}}}">
+    {{/css}}
+  </head>
+  <body>
+
+  <div class="navbar navbar-default navbar-static-top" role="navigation">
+    <div class="container">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="/">builder</a>
+      </div>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav navbar-right">
+          {{#logged_in}}
+            <li><a href="settings">settings</a></li>
+            <li><a href="/logout">logout</a></li>
+          {{/logged_in}}
+          {{^logged_in}}
+            <li><a href="https://github.com/login/oauth/authorize?client_id={{client_id}}&scope=repo">login with github</a></li>
+          {{/logged_in}}
+
+        </ul>
+      </div>
+    </div>
+  </div>
+
+    <div class="container">
+      {{{content}}}
+    </div>
+  </body>
+</html>

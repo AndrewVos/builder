@@ -44,14 +44,38 @@ func (builder *Builder) LaunchBuild(owner string, repo string, ref string, sha s
 	return nil
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
+func defaultViewContext(r *http.Request) map[string]interface{} {
 	account := currentAccount(r)
 
 	context := map[string]interface{}{
-		"clientID": configuration.GithubClientID,
-		"loggedIn": (account != nil),
+		"client_id": configuration.GithubClientID,
+		"logged_in": (account != nil),
 	}
-	body := mustache.RenderFile("views/home.mustache", context)
+	return context
+}
+
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	context := defaultViewContext(r)
+	context["css"] = map[string]string{
+		"name": "home.css",
+	}
+	context["js"] = map[string]string{
+		"name": "home.js",
+	}
+	body := mustache.RenderFileInLayout("views/home.mustache", "views/layout.mustache", context)
+	w.Write([]byte(body))
+}
+
+func buildOutputHandler(w http.ResponseWriter, r *http.Request) {
+	context := defaultViewContext(r)
+	context["css"] = map[string]string{
+		"name": "build_output.css",
+	}
+	context["js"] = map[string]string{
+		"name": "build_output.js",
+	}
+	context["build_id"] = r.URL.Query().Get("id")
+	body := mustache.RenderFileInLayout("views/build_output.mustache", "views/layout.mustache", context)
 	w.Write([]byte(body))
 }
 
@@ -139,12 +163,6 @@ func buildsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	b, _ := json.Marshal(database.AllBuilds())
 	w.Write(b)
-}
-
-func buildOutputHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
-	body := mustache.RenderFile("views/build_output.mustache", map[string]string{"build_id": id})
-	w.Write([]byte(body))
 }
 
 func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
