@@ -66,6 +66,18 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(body))
 }
 
+func settingsHandler(w http.ResponseWriter, r *http.Request) {
+	account := currentAccount(r)
+	if account == nil {
+		http.Redirect(w, r, "/", 302)
+		return
+	}
+
+	context := defaultViewContext(r)
+	body := mustache.RenderFileInLayout("views/settings.mustache", "views/layout.mustache", context)
+	w.Write([]byte(body))
+}
+
 func buildOutputHandler(w http.ResponseWriter, r *http.Request) {
 	context := defaultViewContext(r)
 	context["css"] = map[string]string{

@@ -32,6 +32,7 @@ func init() {
 	http.HandleFunc("/build_output_raw", buildOutputRawHandler)
 	http.HandleFunc("/github_callback", githubLoginHandler)
 	http.HandleFunc("/logout", logoutHandler)
+	http.HandleFunc("/settings", settingsHandler)
 	http.HandleFunc("/add_repository", addRepositoryHandler)
 
 	serveFile("public/scripts/jquery-2.0.3.min.js")
