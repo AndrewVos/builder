@@ -30,7 +30,7 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 	build := &Build{Owner: "ownerrr", Repository: "repo1", Commits: commits}
 	db.CreateBuild(repository, build)
 
-	build = db.AllBuilds()[0]
+	build = db.AllBuilds(account)[0]
 	if len(build.Commits) != len(commits) {
 		t.Fatalf("Expected build to load up %d commits, but had %d commits\n", len(commits), len(build.Commits))
 	}
@@ -41,6 +41,27 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 			actual.Url != expectedCommit.Url {
 			t.Errorf("Expected commit to look like:\n%+v\nActual:\n%+v\n", expectedCommit, actual)
 		}
+	}
+}
+
+func TestAllBuildsOnlyLoadsBuildsForAccount(t *testing.T) {
+	db := createCleanPostgresDatabase()
+
+	account := &Account{Id: 1111}
+	db.CreateAccount(account)
+	repository := &Repository{Owner: "ownerrr", Repository: "repo1"}
+	db.AddRepositoryToAccount(account, repository)
+	db.CreateBuild(repository, &Build{Owner: "ownerrr", Repository: "repo1"})
+
+	otherAccount := &Account{Id: 2323}
+	db.CreateAccount(otherAccount)
+	repository = &Repository{Owner: "something", Repository: "else"}
+	db.AddRepositoryToAccount(otherAccount, repository)
+	db.CreateBuild(repository, &Build{Owner: "something", Repository: "else"})
+
+	allBuilds := db.AllBuilds(account)
+	if len(allBuilds) > 1 {
+		t.Errorf("We should only return builds that this account owns, we returned %d", len(allBuilds))
 	}
 }
 
@@ -119,6 +140,10 @@ func TestAddRepositoryToAccount(t *testing.T) {
 
 	repository := &Repository{Owner: "eer", Repository: "somename"}
 	db.AddRepositoryToAccount(account, repository)
+
+	if repository.Id == 0 {
+		t.Errorf("Repository id should have been updated")
+	}
 
 	foundAccount := db.FindAccountById(595)
 	if len(foundAccount.Repositories) == 0 {

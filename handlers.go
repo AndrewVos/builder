@@ -161,7 +161,7 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 func buildsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	b, _ := json.Marshal(database.AllBuilds())
+	b, _ := json.Marshal(database.AllBuilds(currentAccount(r)))
 	w.Write(b)
 }
 
@@ -170,7 +170,7 @@ func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	start, _ := strconv.Atoi(r.URL.Query().Get("start"))
-	for _, build := range database.AllBuilds() {
+	for _, build := range database.AllBuilds(currentAccount(r)) {
 		if build.Id == id {
 			raw := build.ReadOutput()
 			raw = raw[start:]

@@ -4,7 +4,7 @@ type Database interface {
 	AddRepositoryToAccount(account *Account, repository *Repository) error
 	SaveCommit(commit *Commit) error
 	SaveBuild(build *Build) error
-	AllBuilds() []*Build
+	AllBuilds(account *Account) []*Build
 	CreateBuild(repository *Repository, build *Build) error
 	FindRepository(owner string, name string) *Repository
 	IncompleteBuilds() []*Build

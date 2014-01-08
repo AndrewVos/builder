@@ -78,7 +78,7 @@ func (f *FakeDatabase) SaveBuild(build *Build) error {
 	return nil
 }
 
-func (f *FakeDatabase) AllBuilds() []*Build {
+func (f *FakeDatabase) AllBuilds(account *Account) []*Build {
 	return nil
 }
 

@@ -34,15 +34,20 @@ func (p *PostgresDatabase) AddRepositoryToAccount(account *Account, repository *
 		return err
 	}
 
+	var id int
 	err = db.Query(`
     INSERT INTO repositories (account_id, owner, repository)
       VALUES ($1, $2, $3)
-    `, account.Id, repository.Owner, repository.Repository).Run()
+      RETURNING (id)
+    `, account.Id, repository.Owner, repository.Repository).Rows(&id)
 
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+
+	repository.Id = id
+	account.Repositories = append(account.Repositories, repository)
 
 	return nil
 }
@@ -96,15 +101,24 @@ func (p *PostgresDatabase) SaveBuild(build *Build) error {
 	return err
 }
 
-func (p *PostgresDatabase) AllBuilds() []*Build {
+func (p *PostgresDatabase) AllBuilds(account *Account) []*Build {
+	if account == nil {
+		return []*Build{}
+	}
+
 	db, err := connect()
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
 
+	var repositoryIds []int
+	for _, repository := range account.Repositories {
+		repositoryIds = append(repositoryIds, repository.Id)
+	}
+
 	var builds []*Build
-	err = db.Query("SELECT * FROM builds ORDER BY id").Rows(&builds)
+	err = db.Query("SELECT * FROM builds WHERE repository_id IN ( $1 ) ORDER BY id", repositoryIds).Rows(&builds)
 
 	if err != nil {
 		fmt.Println("Error getting all builds: ", err)

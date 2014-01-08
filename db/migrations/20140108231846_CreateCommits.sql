@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE commits(
-  id       SERIAL PRIMARY KEY,
+  id       SERIAL PRIMARY KEY NOT NULL,
   build_id SERIAL,
   sha      VARCHAR(50),
   message  TEXT,
