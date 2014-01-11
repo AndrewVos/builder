@@ -24,7 +24,7 @@ function update() {
         var html = "<div id='"+build.Id+"' class='build'>" +
           "<h2>" +
             "<div class='ball-container'><div class='ball'></div></div>" +
-            "<a href='/build_output?id=" + build.Id + "'>" +
+            "<a href='" + build.Url + "'>" +
               build.Repository + "/" + build.Ref +
             "</a>" +
           "</h2>" +
