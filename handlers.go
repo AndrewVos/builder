@@ -134,7 +134,10 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
+
+	w.WriteHeader(200)
 }
 
 func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
@@ -169,6 +172,8 @@ func pullRequestHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
+
+	w.WriteHeader(200)
 }
 
 func buildsHandler(w http.ResponseWriter, r *http.Request) {
@@ -231,6 +236,7 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	http.Redirect(w, r, "/settings", 302)
 }
 
 func githubLoginHandler(w http.ResponseWriter, r *http.Request) {

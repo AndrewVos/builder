@@ -44,7 +44,7 @@ func withFakeLauncher(block func(fbl *FakeBuildLauncher)) {
 
 func TestPushHandlerLaunchesBuildWithCorrectValues(t *testing.T) {
 	withFakeLauncher(func(fbl *FakeBuildLauncher) {
-		pushHandler(nil, createFakeRequest("test-data/green_push.json"))
+		pushHandler(httptest.NewRecorder(), createFakeRequest("test-data/green_push.json"))
 
 		expectedValues := map[string]interface{}{
 			"owner":     "AndrewVos",
@@ -75,7 +75,7 @@ func TestPushHandlerLaunchesBuildWithCorrectValues(t *testing.T) {
 
 func TestPushHandlerIgnoresDeletedBranches(t *testing.T) {
 	withFakeLauncher(func(fbl *FakeBuildLauncher) {
-		pushHandler(nil, createFakeRequest("test-data/delete_branch_push.json"))
+		pushHandler(httptest.NewRecorder(), createFakeRequest("test-data/delete_branch_push.json"))
 		if fbl.launchedBuild {
 			t.Error("Shouldn't build deleted branch pushes")
 		}
@@ -84,7 +84,7 @@ func TestPushHandlerIgnoresDeletedBranches(t *testing.T) {
 
 func TestPullRequestHandlerIgnoresClosedPullRequest(t *testing.T) {
 	withFakeLauncher(func(fbl *FakeBuildLauncher) {
-		pullRequestHandler(nil, createFakeRequest("test-data/closed_pull_request.json"))
+		pullRequestHandler(httptest.NewRecorder(), createFakeRequest("test-data/closed_pull_request.json"))
 		if fbl.launchedBuild {
 			t.Error("Shouldn't build closed pull requests")
 		}
@@ -93,7 +93,7 @@ func TestPullRequestHandlerIgnoresClosedPullRequest(t *testing.T) {
 
 func TestPullRequestHandlerLaunchesBuildWithCorrectValues(t *testing.T) {
 	withFakeLauncher(func(fbl *FakeBuildLauncher) {
-		pullRequestHandler(nil, createFakeRequest("test-data/green_pull_request.json"))
+		pullRequestHandler(httptest.NewRecorder(), createFakeRequest("test-data/green_pull_request.json"))
 
 		expectedValues := map[string]interface{}{
 			"owner":     "AndrewVos",
@@ -125,7 +125,7 @@ func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 	r.AddCookie(&http.Cookie{Name: "account_id", Value: "123"})
 	r.AddCookie(&http.Cookie{Name: "token", Value: "nothing"})
 	r.PostForm = formValues
-	addRepositoryHandler(nil, r)
+	addRepositoryHandler(httptest.NewRecorder(), r)
 
 	expectedValues := map[string]interface{}{
 		"accessToken": "sdfwef",
@@ -155,8 +155,7 @@ func TestGithubLoginHandlerCreatesNewAccount(t *testing.T) {
 	fakeDatabase.LoginToReturn = &Login{AccountId: 121212, Token: "tokennn"}
 
 	r, _ := http.NewRequest("GET", "http://bla.com/?code=QUERY_CODE", nil)
-	w := httptest.NewRecorder()
-	githubLoginHandler(w, r)
+	githubLoginHandler(httptest.NewRecorder(), r)
 	if fakeDatabase.CreatedAccount == nil {
 		t.Fatal("Expected an account to be created")
 	}
