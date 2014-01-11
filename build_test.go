@@ -23,7 +23,7 @@ func TestBuildUrl(t *testing.T) {
 		Repository: "repooo",
 	}
 	database.CreateBuild(repository, build)
-	expected := "http://localhost:1212/build_output?id=" + strconv.Itoa(build.Id)
+	expected := "http://localhost:1212/build/" + strconv.Itoa(build.Id) + "/output"
 	if build.Url != expected {
 		t.Errorf("Expected:\n%v\nGot:\n%v\n", expected, build.Url)
 	}
@@ -45,7 +45,7 @@ func TestBuildUrlPort80(t *testing.T) {
 		Repository: "repooo",
 	}
 	database.CreateBuild(repository, build)
-	expected := "http://localhost/build_output?id=" + strconv.Itoa(build.Id)
+	expected := "http://localhost/build/" + strconv.Itoa(build.Id) + "/output"
 	if build.Url != expected {
 		t.Errorf("Expected:\n%v\nGot:\n%v\n", expected, build.Url)
 	}

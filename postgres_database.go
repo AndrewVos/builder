@@ -175,7 +175,7 @@ func (p *PostgresDatabase) CreateBuild(repository *Repository, build *Build) err
 	if configuration.Port != "80" {
 		build.Url += ":" + configuration.Port
 	}
-	build.Url += "/build_output?id=" + strconv.Itoa(build.Id)
+	build.Url += "/build/" + strconv.Itoa(build.Id) + "/output"
 
 	p.SaveBuild(build)
 

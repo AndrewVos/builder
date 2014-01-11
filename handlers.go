@@ -86,7 +86,7 @@ func buildOutputHandler(w http.ResponseWriter, r *http.Request) {
 	context["js"] = map[string]string{
 		"name": "build_output.js",
 	}
-	context["build_id"] = r.URL.Query().Get("id")
+	context["build_id"] = r.URL.Query().Get(":id")
 	body := mustache.RenderFileInLayout("views/build_output.mustache", "views/layout.mustache", context)
 	w.Write([]byte(body))
 }
@@ -180,7 +180,7 @@ func buildsHandler(w http.ResponseWriter, r *http.Request) {
 func buildOutputRawHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
+	id, _ := strconv.Atoi(r.URL.Query().Get(":id"))
 	start, _ := strconv.Atoi(r.URL.Query().Get("start"))
 	for _, build := range database.AllBuilds(currentAccount(r)) {
 		if build.Id == id {

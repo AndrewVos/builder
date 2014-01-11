@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/drone/routes"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -24,24 +26,24 @@ func deleteIncompleteBuilds() {
 
 func init() {
 	git = Git{}
-	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/hooks/push", pushHandler)
-	http.HandleFunc("/hooks/pull_request", pullRequestHandler)
-	http.HandleFunc("/builds", buildsHandler)
-	http.HandleFunc("/build_output", buildOutputHandler)
-	http.HandleFunc("/build_output_raw", buildOutputRawHandler)
-	http.HandleFunc("/github_callback", githubLoginHandler)
-	http.HandleFunc("/logout", logoutHandler)
-	http.HandleFunc("/settings", settingsHandler)
-	http.HandleFunc("/add_repository", addRepositoryHandler)
 
-	serveFile("public/scripts/jquery-2.0.3.min.js")
-	serveFile("public/scripts/home.js")
-	serveFile("public/scripts/build_output.js")
-	serveFile("public/styles/common.css")
-	serveFile("public/styles/home.css")
-	serveFile("public/styles/build_output.css")
-	serveFile("public/styles/bootstrap.min.css")
+	mux := routes.New()
+	mux.Get("/", homeHandler)
+	mux.Get("/builds", buildsHandler)
+	mux.Get("/build/:id/output", buildOutputHandler)
+	mux.Get("/build/:id/output/raw", buildOutputRawHandler)
+	mux.Get("/github_callback", githubLoginHandler)
+	mux.Get("/logout", logoutHandler)
+	mux.Get("/settings", settingsHandler)
+
+	mux.Post("/hooks/push", pushHandler)
+	mux.Post("/hooks/pull_request", pullRequestHandler)
+	mux.Post("/add_repository", addRepositoryHandler)
+
+	pwd, _ := os.Getwd()
+	mux.Static("/assets", pwd)
+
+	http.Handle("/", mux)
 }
 
 func serve() {
