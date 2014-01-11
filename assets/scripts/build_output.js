@@ -27,7 +27,7 @@ function selectLine(element) {
 }
 
 function update() {
-  $.getJSON("/build/" + $("#build_id").val() + "/output/raw/&start=" + window.downloadedOutputBytes, function(data) {
+  $.getJSON("/build/" + $("#build_id").val() + "/output/raw?start=" + window.downloadedOutputBytes, function(data) {
     if (data.output != "") {
       window.downloadedOutputBytes += data.length;
       $("#output").append($(data.output));
