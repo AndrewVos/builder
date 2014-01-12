@@ -49,7 +49,6 @@ func TestCreatesPushAndPullRequestHooks(t *testing.T) {
 
 func TestCanTellIfARepositoryIsPrivate(t *testing.T) {
 	git := Git{}
-	git.CreateHooks("lolsszz", "AndrewVos", "builder")
 
 	status := 0
 	serverThatReturnsStatus := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
