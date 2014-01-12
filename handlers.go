@@ -218,7 +218,6 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 	if account != nil {
 		owner := r.PostFormValue("owner")
 		repository := r.PostFormValue("repository")
-		public := r.PostFormValue("public") != ""
 
 		err := git.CreateHooks(account.AccessToken, owner, repository)
 		if err != nil {
@@ -230,7 +229,7 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 		err = database.AddRepositoryToAccount(account, &Repository{
 			Owner:      owner,
 			Repository: repository,
-			Public:     public,
+			Public:     !git.IsRepositoryPrivate(owner, repository),
 		})
 		if err != nil {
 			fmt.Println(err)

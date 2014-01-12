@@ -25,10 +25,11 @@ func resetFakeGit() {
 }
 
 type FakeGit struct {
-	FakeRepo              string
-	UserIdToReturn        int
-	AccessTokenToReturn   string
-	createHooksParameters map[string]interface{}
+	FakeRepo                  string
+	UserIdToReturn            int
+	AccessTokenToReturn       string
+	createHooksParameters     map[string]interface{}
+	IsRepositoryPrivateResult bool
 }
 
 func (g *FakeGit) Retrieve(log io.Writer, url string, path string, branch string, sha string) error {
@@ -56,6 +57,10 @@ func (g *FakeGit) GetAccessToken(clientId string, clientSecret string, code stri
 
 func (g *FakeGit) GetUserID(accessToken string) (int, error) {
 	return g.UserIdToReturn, nil
+}
+
+func (g *FakeGit) IsRepositoryPrivate(owner string, name string) bool {
+	return g.IsRepositoryPrivateResult
 }
 
 type FakeDatabase struct {

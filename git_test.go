@@ -46,3 +46,29 @@ func TestCreatesPushAndPullRequestHooks(t *testing.T) {
 		}
 	}
 }
+
+func TestCanTellIfARepositoryIsPrivate(t *testing.T) {
+	git := Git{}
+	git.CreateHooks("lolsszz", "AndrewVos", "builder")
+
+	status := 0
+	serverThatReturnsStatus := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(status)
+	}))
+	oldDomain := githubDomain
+	githubDomain = serverThatReturnsStatus.URL
+	defer func() {
+		githubDomain = oldDomain
+		serverThatReturnsStatus.Close()
+	}()
+
+	status = 200
+	if git.IsRepositoryPrivate("bla", "reponame") {
+		t.Errorf("repository isn't actually private")
+	}
+
+	status = 404
+	if git.IsRepositoryPrivate("blaaaa", "ergh") == false {
+		t.Errorf("repository returned 404, so it should be private")
+	}
+}

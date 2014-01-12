@@ -17,6 +17,7 @@ type GitTool interface {
 	CreateHooks(accessToken string, owner string, repo string) error
 	GetAccessToken(clientId string, clientSecret string, code string) (string, error)
 	GetUserID(accessToken string) (int, error)
+	IsRepositoryPrivate(owner string, name string) bool
 }
 
 type Git struct{}
@@ -123,4 +124,10 @@ func (git Git) GetUserID(accessToken string) (int, error) {
 		return int(m["id"].(float64)), nil
 	}
 	return 0, fmt.Errorf("Couldn't unmarshal ID, json was:\n%v\nUrl:%v", string(b), url)
+}
+
+func (git Git) IsRepositoryPrivate(owner string, name string) bool {
+	url := fmt.Sprintf("%v/repos/%v/%v", githubDomain, owner, name)
+	response, _ := http.Get(url)
+	return response.StatusCode != 200
 }

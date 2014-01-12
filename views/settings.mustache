@@ -1,4 +1,4 @@
-<form role="form">
+<form role="form" action="/repository" method="POST">
   <div class="panel panel-default">
     <div class="panel-heading">Add a repository</div>
     <div class="panel-body">
@@ -9,14 +9,6 @@
       <div class="form-group">
         <label for="repository">Repository</label>
         <input type="text" class="form-control" name="repository" id="repository">
-      </div>
-      <div class="form-group">
-        <div class="checkbox">
-          <label>
-            <input type="checkbox" name="public" id="public">
-            Public?
-          </label>
-        </div>
       </div>
 
       <input type="submit" class="btn btn-default" value="Add Repository"/>

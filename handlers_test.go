@@ -115,12 +115,13 @@ func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 	formValues := url.Values{}
 	formValues.Set("owner", "RepoOwnerrr")
 	formValues.Set("repository", "RailsTurboLinks")
-	formValues.Set("public", "1")
 
 	fakeDatabase.FindAccountByIdToReturn = &Account{
 		Id:          3232,
 		AccessToken: "sdfwef",
 	}
+
+	fakeGit.IsRepositoryPrivateResult = false
 
 	r, _ := http.NewRequest("", "", nil)
 	r.AddCookie(&http.Cookie{Name: "account_id", Value: "123"})
