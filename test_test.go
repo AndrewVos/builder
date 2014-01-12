@@ -82,6 +82,10 @@ func (f *FakeDatabase) AllBuilds(account *Account) []*Build {
 	return nil
 }
 
+func (f *FakeDatabase) FindPublicBuilds() []*Build {
+	return nil
+}
+
 func (f *FakeDatabase) CreateBuild(githubBuild *Repository, build *Build) error {
 	return nil
 }

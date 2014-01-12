@@ -36,10 +36,10 @@ func (p *PostgresDatabase) AddRepositoryToAccount(account *Account, repository *
 
 	var id int
 	err = db.Query(`
-    INSERT INTO repositories (account_id, owner, repository)
-      VALUES ($1, $2, $3)
+    INSERT INTO repositories (account_id, owner, repository, public)
+      VALUES ($1, $2, $3, $4)
       RETURNING (id)
-    `, account.Id, repository.Owner, repository.Repository).Rows(&id)
+    `, account.Id, repository.Owner, repository.Repository, repository.Public).Rows(&id)
 
 	if err != nil {
 		log.Println(err)
@@ -119,6 +119,46 @@ func (p *PostgresDatabase) AllBuilds(account *Account) []*Build {
 
 	var builds []*Build
 	err = db.Query("SELECT * FROM builds WHERE repository_id IN ( $1 ) ORDER BY id", repositoryIds).Rows(&builds)
+
+	if err != nil {
+		fmt.Println("Error getting all builds: ", err)
+		return nil
+	}
+
+	if len(builds) > 0 {
+		var buildIds []int
+		buildsById := map[int]*Build{}
+		for _, build := range builds {
+			buildIds = append(buildIds, build.Id)
+			buildsById[build.Id] = build
+		}
+
+		var commits []Commit
+		err = db.Query("SELECT * FROM commits WHERE build_id IN ( $1 )", buildIds).Rows(&commits)
+		if err != nil {
+			fmt.Println("Error getting commits:", err)
+			return nil
+		}
+
+		for _, commit := range commits {
+			build := buildsById[commit.BuildId]
+			build.Commits = append(build.Commits, commit)
+		}
+	}
+
+	return builds
+}
+
+func (p *PostgresDatabase) FindPublicBuilds() []*Build {
+	db, err := connect()
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	var builds []*Build
+	err = db.Query(`SELECT builds.* FROM builds
+                    INNER JOIN repositories ON (builds.repository_id = repositories.id AND repositories.public = true) ORDER BY builds.id`).Rows(&builds)
 
 	if err != nil {
 		fmt.Println("Error getting all builds: ", err)

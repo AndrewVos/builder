@@ -5,6 +5,7 @@ type Database interface {
 	SaveCommit(commit *Commit) error
 	SaveBuild(build *Build) error
 	AllBuilds(account *Account) []*Build
+	FindPublicBuilds() []*Build
 	CreateBuild(repository *Repository, build *Build) error
 	FindRepository(owner string, name string) *Repository
 	IncompleteBuilds() []*Build

@@ -6,4 +6,5 @@ type Repository struct {
 	Owner      string
 	Repository string
 	Account    *Account
+	Public     bool
 }

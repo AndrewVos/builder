@@ -115,6 +115,7 @@ func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 	formValues := url.Values{}
 	formValues.Set("owner", "RepoOwnerrr")
 	formValues.Set("repository", "RailsTurboLinks")
+	formValues.Set("public", "1")
 
 	fakeDatabase.FindAccountByIdToReturn = &Account{
 		Id:          3232,
@@ -144,6 +145,9 @@ func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 	}
 	if fakeDatabase.SavedRepository.Repository != expectedValues["repository"] {
 		t.Errorf("Expected Repository to be %q, but was %q\n", expectedValues["repository"], fakeDatabase.SavedRepository.Repository)
+	}
+	if fakeDatabase.SavedRepository.Public != true {
+		t.Errorf("Expected Public to be %v, but was %v\n", true, fakeDatabase.SavedRepository.Public)
 	}
 }
 

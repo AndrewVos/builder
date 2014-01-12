@@ -44,6 +44,49 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 	}
 }
 
+func TestFindPublicBuilds(t *testing.T) {
+	db := createCleanPostgresDatabase()
+
+	account := &Account{}
+	db.CreateAccount(account)
+
+	repository1 := &Repository{Owner: "ownerrr", Repository: "repo1", Public: false}
+	repository2 := &Repository{Owner: "ownerrr", Repository: "repo2", Public: true}
+
+	db.AddRepositoryToAccount(account, repository1)
+	db.AddRepositoryToAccount(account, repository2)
+
+	db.CreateBuild(repository1, &Build{Owner: "ownerrr", Repository: "repo1"})
+
+	commits := []Commit{
+		Commit{Sha: "dssdsd", Message: "hellooo", Url: "something.com"},
+	}
+
+	db.CreateBuild(repository2, &Build{Owner: "ownerrr", Repository: "repo2", Commits: commits})
+
+	builds := db.FindPublicBuilds()
+
+	if len(builds) != 1 {
+		t.Fatalf("Should have only found one build")
+	}
+	build := builds[0]
+
+	if build.Owner != "ownerrr" || build.Repository != "repo2" {
+		t.Errorf("This wasn't the build on the public repo")
+	}
+	if len(build.Commits) != len(commits) {
+		t.Fatalf("Expected %d commits, but has %d commits\n", len(commits), len(build.Commits))
+	}
+	for index, expectedCommit := range commits {
+		actual := build.Commits[index]
+		if actual.Sha != expectedCommit.Sha ||
+			actual.Message != expectedCommit.Message ||
+			actual.Url != expectedCommit.Url {
+			t.Errorf("Expected commit to look like:\n%+v\nActual:\n%+v\n", expectedCommit, actual)
+		}
+	}
+}
+
 func TestAllBuildsOnlyLoadsBuildsForAccount(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
@@ -138,7 +181,7 @@ func TestAddRepositoryToAccount(t *testing.T) {
 	account := &Account{Id: 595, AccessToken: "23mf23f22n3kl2n3nkl2n3lnl2n3ln3lnl"}
 	db.CreateAccount(account)
 
-	repository := &Repository{Owner: "eer", Repository: "somename"}
+	repository := &Repository{Owner: "eer", Repository: "somename", Public: true}
 	db.AddRepositoryToAccount(account, repository)
 
 	if repository.Id == 0 {
@@ -157,6 +200,9 @@ func TestAddRepositoryToAccount(t *testing.T) {
 	}
 	if foundAccount.Repositories[0].Repository != "somename" {
 		t.Errorf("Name was %v", foundAccount.Repositories[0].Repository)
+	}
+	if foundAccount.Repositories[0].Public != true {
+		t.Errorf("Public was %v", foundAccount.Repositories[0].Public)
 	}
 }
 
