@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -70,4 +71,43 @@ func TestCanTellIfARepositoryIsPrivate(t *testing.T) {
 	if git.IsRepositoryPrivate("blaaaa", "ergh") == false {
 		t.Errorf("repository returned 404, so it should be private")
 	}
+}
+
+func withFakedGithubApiDomain(domain string, block func()) {
+	oldDomain := githubDomain
+	githubDomain = domain
+	block()
+	githubDomain = oldDomain
+}
+
+func TestListsRepoCollaborators(t *testing.T) {
+	git := Git{}
+
+	response := `
+    [
+      { "login": "AndrewVos", "id": 363618 },
+      { "login": "andrewvo", "id": 1605821 }
+    ]
+  `
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		expectedUrl := fmt.Sprintf("/repos/%v/%v/collaborators?access_token=%v", "owner1", "repo3", "TOKEN")
+		if r.URL.RequestURI() == expectedUrl {
+			w.Write([]byte(response))
+		}
+	}))
+	defer ts.Close()
+
+	withFakedGithubApiDomain(ts.URL, func() {
+		collaborators := git.RepositoryCollaborators("TOKEN", "owner1", "repo3")
+		if len(collaborators) != 2 {
+			t.Fatalf("Expected to have 2 collaborators, not %d\n", len(collaborators))
+		}
+		if collaborators[0].Login != "AndrewVos" || collaborators[0].Id != 363618 {
+			t.Errorf("Collaborator 0 was wrong. Got:\n%+v", collaborators[0])
+		}
+		if collaborators[1].Login != "andrewvo" || collaborators[1].Id != 1605821 {
+			t.Errorf("Collaborator 1 was wrong. Got:\n%+v", collaborators[1])
+		}
+	})
 }

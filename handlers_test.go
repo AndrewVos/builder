@@ -123,6 +123,10 @@ func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 
 	fakeGit.IsRepositoryPrivateResult = false
 
+	fakeGit.CollaboratorsToReturn = []Collaborator{
+		Collaborator{Id: 192},
+	}
+
 	r, _ := http.NewRequest("", "", nil)
 	r.AddCookie(&http.Cookie{Name: "account_id", Value: "123"})
 	r.AddCookie(&http.Cookie{Name: "token", Value: "nothing"})
@@ -149,6 +153,12 @@ func TestAddRepositoryHandlerCreatesHooksAndRepository(t *testing.T) {
 	}
 	if fakeDatabase.SavedRepository.Public != true {
 		t.Errorf("Expected Public to be %v, but was %v\n", true, fakeDatabase.SavedRepository.Public)
+	}
+
+	if len(fakeDatabase.AddedCollaborations) != 1 {
+		t.Errorf("Should have added one collaborator")
+	} else if fakeDatabase.AddedCollaborations[0]["account_id"] != 192 || fakeDatabase.AddedCollaborations[0]["repository_id"] != 0 {
+		t.Errorf("Saved with wrong values %v", fakeDatabase.AddedCollaborations)
 	}
 }
 

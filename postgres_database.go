@@ -117,6 +117,13 @@ func (p *PostgresDatabase) AllBuilds(account *Account) []*Build {
 		repositoryIds = append(repositoryIds, repository.Id)
 	}
 
+	var collaborations []int
+	err = db.Query("SELECT repository_id from collaborations WHERE account_id = $1", account.Id).Rows(&collaborations)
+
+	for _, collaboratedRepository := range collaborations {
+		repositoryIds = append(repositoryIds, collaboratedRepository)
+	}
+
 	var builds []*Build
 	err = db.Query("SELECT * FROM builds WHERE repository_id IN ( $1 ) ORDER BY id", repositoryIds).Rows(&builds)
 
@@ -403,4 +410,20 @@ func (p *PostgresDatabase) LoginExists(accountId int, token string) bool {
 	}
 
 	return count == 1
+}
+
+func (p *PostgresDatabase) SaveCollaboration(accountId int, repositoryId int) error {
+	db, err := connect()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	err = db.Query(`
+      INSERT INTO collaborations (account_id, repository_id)
+      VALUES ($1, $2)
+    `, accountId, repositoryId).Run()
+	if err != nil {
+		log.Println(err)
+	}
+	return err
 }

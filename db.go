@@ -13,4 +13,5 @@ type Database interface {
 	CreateAccount(account *Account) error
 	CreateLoginForAccount(account *Account) (*Login, error)
 	LoginExists(accountId int, token string) bool
+	SaveCollaboration(accountId int, repositoryId int) error
 }

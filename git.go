@@ -18,9 +18,15 @@ type GitTool interface {
 	GetAccessToken(clientId string, clientSecret string, code string) (string, error)
 	GetUserID(accessToken string) (int, error)
 	IsRepositoryPrivate(owner string, name string) bool
+	RepositoryCollaborators(accessToken string, owner string, name string) []Collaborator
 }
 
 type Git struct{}
+
+type Collaborator struct {
+	Id    int
+	Login string
+}
 
 func (git Git) Retrieve(log io.Writer, url string, path string, branch string, sha string) error {
 	cmd := exec.Command("git", "clone", "--quiet", "--depth=50", "--branch", branch, url, path)
@@ -130,4 +136,14 @@ func (git Git) IsRepositoryPrivate(owner string, name string) bool {
 	url := fmt.Sprintf("%v/repos/%v/%v", githubDomain, owner, name)
 	response, _ := http.Get(url)
 	return response.StatusCode != 200
+}
+
+func (git Git) RepositoryCollaborators(accessToken string, owner string, name string) []Collaborator {
+	url := fmt.Sprintf("%v/repos/%v/%v/collaborators?access_token=%v", githubDomain, owner, name, accessToken)
+	response, _ := http.Get(url)
+	b, _ := ioutil.ReadAll(response.Body)
+	response.Body.Close()
+	var collaborators []Collaborator
+	json.Unmarshal(b, &collaborators)
+	return collaborators
 }

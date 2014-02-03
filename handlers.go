@@ -217,24 +217,31 @@ func addRepositoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	if account != nil {
 		owner := r.PostFormValue("owner")
-		repository := r.PostFormValue("repository")
+		repositoryName := r.PostFormValue("repository")
 
-		err := git.CreateHooks(account.AccessToken, owner, repository)
+		err := git.CreateHooks(account.AccessToken, owner, repositoryName)
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(500)
 			return
 		}
 
-		err = database.AddRepositoryToAccount(account, &Repository{
+		repository := &Repository{
 			Owner:      owner,
-			Repository: repository,
-			Public:     !git.IsRepositoryPrivate(owner, repository),
-		})
+			Repository: repositoryName,
+			Public:     !git.IsRepositoryPrivate(owner, repositoryName),
+		}
+		err = database.AddRepositoryToAccount(account, repository)
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(500)
 			return
+		}
+
+		collaborators := git.RepositoryCollaborators(account.AccessToken, owner, repositoryName)
+
+		for _, collaborator := range collaborators {
+			database.SaveCollaboration(collaborator.Id, repository.Id)
 		}
 	}
 	http.Redirect(w, r, "/settings", 302)

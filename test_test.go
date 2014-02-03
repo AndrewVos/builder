@@ -30,6 +30,7 @@ type FakeGit struct {
 	AccessTokenToReturn       string
 	createHooksParameters     map[string]interface{}
 	IsRepositoryPrivateResult bool
+	CollaboratorsToReturn     []Collaborator
 }
 
 func (g *FakeGit) Retrieve(log io.Writer, url string, path string, branch string, sha string) error {
@@ -68,6 +69,11 @@ type FakeDatabase struct {
 	CreatedAccount          *Account
 	LoginToReturn           *Login
 	FindAccountByIdToReturn *Account
+	AddedCollaborations     []map[string]int
+}
+
+func (g *FakeGit) RepositoryCollaborators(accessToken string, owner string, name string) []Collaborator {
+	return g.CollaboratorsToReturn
 }
 
 func (f *FakeDatabase) AddRepositoryToAccount(account *Account, repository *Repository) error {
@@ -123,4 +129,12 @@ func (f *FakeDatabase) CreateLoginForAccount(account *Account) (*Login, error) {
 
 func (f *FakeDatabase) LoginExists(accountId int, token string) bool {
 	return true
+}
+
+func (f *FakeDatabase) SaveCollaboration(accountId int, repositoryId int) error {
+	f.AddedCollaborations = append(f.AddedCollaborations, map[string]int{
+		"account_id":    accountId,
+		"repository_id": repositoryId,
+	})
+	return nil
 }

@@ -44,6 +44,30 @@ func TestAllBuildsLoadsCommits(t *testing.T) {
 	}
 }
 
+func TestAllBuildsLoadsRepositoriesUserIsCollaboratorOn(t *testing.T) {
+	db := createCleanPostgresDatabase()
+
+	account := &Account{Id: 9999}
+	repository := &Repository{Owner: "someone", Repository: "repo"}
+	db.AddRepositoryToAccount(account, repository)
+
+	build := &Build{Owner: "someone", Repository: "repo1"}
+	db.CreateBuild(repository, build)
+	build = &Build{Owner: "someone", Repository: "repo2"}
+	db.CreateBuild(repository, build)
+
+	teamMember := &Account{Id: 2333}
+	db.CreateAccount(teamMember)
+
+	db.SaveCollaboration(teamMember.Id, repository.Id)
+
+	builds := db.AllBuilds(teamMember)
+
+	if len(builds) != 2 {
+		t.Fatalf("Expected to find the collaborated build")
+	}
+}
+
 func TestFindPublicBuilds(t *testing.T) {
 	db := createCleanPostgresDatabase()
 
