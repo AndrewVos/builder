@@ -2,6 +2,10 @@
   <div class="panel panel-default">
     <div class="panel-heading">Add a repository</div>
     <div class="panel-body">
+      <p>If you want to add private repositories you need to give builder access to them:</p>
+      <a class="btn btn-default" href="https://github.com/login/oauth/authorize?client_id={{client_id}}&scope=repo">
+        Give builder access to my private repositories
+      </a>
       <div class="form-group">
         <label for="owner">Owner</label>
         <input type="text" class="form-control" name="owner" id="owner">
