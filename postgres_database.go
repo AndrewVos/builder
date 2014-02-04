@@ -125,6 +125,10 @@ func (p *PostgresDatabase) AllBuilds(account *Account) []*Build {
 	}
 
 	var builds []*Build
+	if len(repositoryIds) == 0 {
+		return builds
+	}
+
 	err = db.Query("SELECT * FROM builds WHERE repository_id IN ( $1 ) ORDER BY id", repositoryIds).Rows(&builds)
 
 	if err != nil {
